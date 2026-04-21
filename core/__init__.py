@@ -1,0 +1,1 @@
+# Shrinkify core package
