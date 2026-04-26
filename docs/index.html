@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shrinkify — Make Your Media Library Breathe Again</title>
+  <meta name="description" content="Shrinkify converts H.264 videos and JPEG photos to modern H.265/HEIF formats, detects duplicates, and can cut your media library size by up to 60%. Free, open source, runs on Windows, macOS, and Linux.">
+  <meta name="keywords" content="media optimizer, H.265, HEIF, HEVC, video converter, photo converter, duplicate finder, disk space, open source">
+  <meta name="author" content="Nazımcan İslam">
+  <meta property="og:title" content="Shrinkify — Make Your Media Library Breathe Again">
+  <meta property="og:description" content="Convert old H.264 videos and JPEGs to modern formats. Free up gigabytes without losing a pixel of quality.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nazimcanislam.github.io/shrinkify/">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://nazimcanislam.github.io/shrinkify/">
+
+  <style>
+    /* ── Reset & base ───────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f8f7f4;
+      --bg2:       #eeecea;
+      --surface:   #ffffff;
+      --border:    #e0ddd8;
+      --text:      #1a1916;
+      --text-2:    #5a5750;
+      --text-3:    #9a9590;
+      --accent:    #1d7a5f;
+      --accent-lt: #e8f5f0;
+      --accent-dk: #155a46;
+      --amber:     #c87d2a;
+      --amber-lt:  #fef3e2;
+      --red:       #c0392b;
+      --shadow:    0 2px 8px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,.10), 0 4px 12px rgba(0,0,0,.06);
+      --radius:    14px;
+      --font:      -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      --mono:      ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+    }
+
+    [data-theme="dark"] {
+      --bg:        #0e0e0c;
+      --bg2:       #161614;
+      --surface:   #1c1c19;
+      --border:    #2e2e2a;
+      --text:      #f0ede8;
+      --text-2:    #9a9590;
+      --text-3:    #5a5750;
+      --accent:    #3db88a;
+      --accent-lt: #0f2e22;
+      --accent-dk: #4dcf9e;
+      --amber:     #e8973a;
+      --amber-lt:  #2a1e0a;
+      --red:       #e05a4e;
+      --shadow:    0 2px 8px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.2);
+      --shadow-lg: 0 12px 40px rgba(0,0,0,.4), 0 4px 12px rgba(0,0,0,.3);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 16px;
+      transition: background .2s, color .2s;
+    }
+
+    /* ── Layout ─────────────────────────────────────────────── */
+    .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+    section { padding: 96px 0; }
+
+    /* ── Nav ────────────────────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: color-mix(in srgb, var(--bg) 85%, transparent);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      height: 60px; max-width: 1080px; margin: 0 auto; padding: 0 24px;
+    }
+
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; font-size: 17px; color: var(--text);
+      text-decoration: none; letter-spacing: -.3px;
+    }
+
+    .nav-logo svg { width: 28px; height: 28px; }
+
+    .nav-links { display: flex; align-items: center; gap: 28px; }
+
+    .nav-links a {
+      color: var(--text-2); font-size: 14px; text-decoration: none;
+      transition: color .15s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-links .btn-nav {
+      background: var(--accent); color: #fff;
+      padding: 7px 16px; border-radius: 8px;
+      font-size: 14px; font-weight: 600;
+      transition: background .15s;
+    }
+    .nav-links .btn-nav:hover { background: var(--accent-dk); color: #fff; }
+
+    .theme-toggle {
+      background: none; border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 10px; cursor: pointer;
+      color: var(--text-2); font-size: 15px;
+      transition: all .15s;
+    }
+    .theme-toggle:hover { background: var(--bg2); color: var(--text); }
+
+    /* ── Hero ───────────────────────────────────────────────── */
+    #hero {
+      padding: 80px 0 96px;
+      position: relative; overflow: hidden;
+    }
+
+    .hero-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 64px; align-items: center;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent-lt); color: var(--accent);
+      border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+      border-radius: 100px; padding: 5px 14px;
+      font-size: 13px; font-weight: 600; letter-spacing: .02em;
+      margin-bottom: 20px;
+    }
+
+    .hero-eyebrow span { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; }
+
+    h1 {
+      font-size: clamp(32px, 4.5vw, 52px);
+      font-weight: 800; line-height: 1.1; letter-spacing: -.03em;
+      margin-bottom: 20px;
+    }
+
+    h1 em { font-style: normal; color: var(--accent); }
+
+    .hero-sub {
+      font-size: 18px; color: var(--text-2); line-height: 1.65;
+      margin-bottom: 36px; max-width: 480px;
+    }
+
+    .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent); color: #fff;
+      padding: 13px 24px; border-radius: 10px;
+      font-size: 15px; font-weight: 600; text-decoration: none;
+      transition: background .15s, transform .15s;
+    }
+    .btn-primary:hover { background: var(--accent-dk); transform: translateY(-1px); }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface); color: var(--text);
+      border: 1px solid var(--border);
+      padding: 13px 24px; border-radius: 10px;
+      font-size: 15px; font-weight: 600; text-decoration: none;
+      transition: all .15s;
+    }
+    .btn-secondary:hover { background: var(--bg2); transform: translateY(-1px); }
+
+    /* ── Disk animation ─────────────────────────────────────── */
+    .hero-visual {
+      display: flex; justify-content: center; align-items: center;
+      position: relative;
+    }
+
+    .disk-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px 32px;
+      box-shadow: var(--shadow-lg);
+      width: 100%; max-width: 360px;
+    }
+
+    .disk-card-title {
+      font-size: 12px; font-weight: 600; color: var(--text-3);
+      letter-spacing: .1em; text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .disk-row {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .disk-icon { font-size: 22px; flex-shrink: 0; width: 32px; text-align: center; }
+
+    .disk-info { flex: 1; min-width: 0; }
+
+    .disk-name {
+      font-size: 13px; font-weight: 500; color: var(--text);
+      margin-bottom: 5px; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .disk-bar-track {
+      height: 8px; background: var(--bg2);
+      border-radius: 4px; overflow: hidden;
+    }
+
+    .disk-bar-fill {
+      height: 100%; border-radius: 4px;
+      transition: width 1.2s cubic-bezier(.4,0,.2,1);
+    }
+
+    .disk-bar-fill.red   { background: var(--red); }
+    .disk-bar-fill.amber { background: var(--amber); }
+    .disk-bar-fill.green { background: var(--accent); }
+
+    .disk-size {
+      font-size: 12px; color: var(--text-3);
+      font-family: var(--mono);
+      margin-top: 3px;
+    }
+
+    .disk-size s { opacity: .5; }
+    .disk-size b { color: var(--accent); }
+
+    .disk-divider {
+      height: 1px; background: var(--border);
+      margin: 16px 0;
+    }
+
+    .disk-total {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .disk-total-label {
+      font-size: 13px; font-weight: 600; color: var(--text-2);
+    }
+
+    .disk-total-value {
+      font-family: var(--mono); font-size: 14px; font-weight: 700;
+      color: var(--accent);
+    }
+
+    .disk-badge {
+      display: inline-block; margin-top: 14px;
+      background: var(--accent-lt); color: var(--accent);
+      border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+      border-radius: 6px; padding: 5px 12px;
+      font-size: 13px; font-weight: 600; width: 100%; text-align: center;
+    }
+
+    /* ── Stats row ──────────────────────────────────────────── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 24px; margin-top: 48px;
+      padding-top: 48px; border-top: 1px solid var(--border);
+    }
+
+    .stat-item { text-align: center; }
+
+    .stat-num {
+      font-size: 36px; font-weight: 800; letter-spacing: -.03em;
+      color: var(--accent); line-height: 1;
+    }
+
+    .stat-label { font-size: 14px; color: var(--text-2); margin-top: 6px; }
+
+    /* ── How it works ───────────────────────────────────────── */
+    #how { background: var(--bg2); }
+
+    .section-label {
+      font-size: 12px; font-weight: 700; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-size: clamp(24px, 3vw, 38px);
+      font-weight: 800; letter-spacing: -.03em;
+      line-height: 1.15; margin-bottom: 16px;
+    }
+
+    .section-sub {
+      font-size: 17px; color: var(--text-2); max-width: 560px;
+      line-height: 1.65; margin-bottom: 56px;
+    }
+
+    .steps {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      position: relative;
+      transition: box-shadow .2s;
+    }
+    .step:hover { box-shadow: var(--shadow-lg); }
+
+    .step-num {
+      font-family: var(--mono);
+      font-size: 11px; font-weight: 700;
+      color: var(--text-3); letter-spacing: .1em;
+      margin-bottom: 14px;
+    }
+
+    .step-icon {
+      font-size: 32px; margin-bottom: 14px; display: block;
+    }
+
+    .step h3 {
+      font-size: 17px; font-weight: 700; margin-bottom: 8px;
+      letter-spacing: -.02em;
+    }
+
+    .step p { font-size: 14px; color: var(--text-2); line-height: 1.6; }
+
+    /* ── Features ───────────────────────────────────────────── */
+    .features-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: box-shadow .2s, transform .2s;
+    }
+    .feature-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+
+    .feature-icon {
+      width: 44px; height: 44px;
+      background: var(--accent-lt);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; margin-bottom: 16px;
+    }
+
+    .feature-card h3 {
+      font-size: 16px; font-weight: 700; margin-bottom: 8px;
+      letter-spacing: -.02em;
+    }
+
+    .feature-card p { font-size: 14px; color: var(--text-2); line-height: 1.6; }
+
+    .feature-tag {
+      display: inline-block; margin-top: 12px;
+      background: var(--amber-lt); color: var(--amber);
+      border-radius: 5px; padding: 2px 8px;
+      font-size: 11px; font-weight: 600; letter-spacing: .04em;
+    }
+
+    /* ── Before/After ───────────────────────────────────────── */
+    #results { background: var(--bg2); }
+
+    .ba-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 48px; align-items: start;
+    }
+
+    .ba-side h3 {
+      font-size: 13px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--text-3);
+      margin-bottom: 16px;
+    }
+
+    .ba-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .ba-file-icon { font-size: 20px; flex-shrink: 0; }
+
+    .ba-file-name {
+      font-size: 13px; font-weight: 500; color: var(--text);
+      font-family: var(--mono);
+    }
+
+    .ba-file-size {
+      font-size: 12px; color: var(--text-3);
+      font-family: var(--mono); margin-top: 2px;
+    }
+
+    .ba-file-size.shrank { color: var(--accent); font-weight: 600; }
+
+    .ba-arrow {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; color: var(--accent);
+      padding: 0 12px; align-self: center;
+    }
+
+    .ba-savings-box {
+      background: var(--accent-lt);
+      border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
+      border-radius: 12px; padding: 20px 24px;
+      margin-top: 24px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .ba-savings-label { font-size: 14px; color: var(--text-2); }
+
+    .ba-savings-num {
+      font-size: 28px; font-weight: 800;
+      color: var(--accent); letter-spacing: -.03em;
+    }
+
+    /* ── Download ───────────────────────────────────────────── */
+    #download { text-align: center; }
+
+    .download-cards {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 20px; margin-top: 48px; text-align: left;
+    }
+
+    .dl-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      transition: box-shadow .2s, transform .2s, border-color .2s;
+      cursor: default;
+    }
+
+    .dl-card.highlighted {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+    }
+
+    .dl-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-2px); }
+
+    .dl-platform-icon { font-size: 36px; margin-bottom: 16px; display: block; }
+
+    .dl-card h3 {
+      font-size: 18px; font-weight: 700; margin-bottom: 6px;
+      letter-spacing: -.02em;
+    }
+
+    .dl-card p { font-size: 13px; color: var(--text-2); margin-bottom: 20px; }
+
+    .dl-badge {
+      display: inline-block;
+      background: var(--accent-lt); color: var(--accent);
+      border-radius: 5px; padding: 2px 8px;
+      font-size: 11px; font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .dl-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: var(--accent); color: #fff;
+      border-radius: 9px; padding: 11px 20px;
+      font-size: 14px; font-weight: 600; text-decoration: none;
+      transition: background .15s;
+    }
+    .dl-btn:hover { background: var(--accent-dk); }
+
+    .dl-btn.secondary {
+      background: var(--bg2); color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .dl-btn.secondary:hover { background: var(--border); }
+
+    .dl-note {
+      margin-top: 40px;
+      background: var(--amber-lt);
+      border: 1px solid color-mix(in srgb, var(--amber) 30%, transparent);
+      border-radius: 10px; padding: 16px 20px;
+      font-size: 14px; color: var(--text-2);
+      text-align: left; max-width: 700px; margin-left: auto; margin-right: auto;
+    }
+
+    .dl-note strong { color: var(--amber); }
+
+    .dl-note a { color: var(--accent); }
+
+    /* ── Guide ──────────────────────────────────────────────── */
+    #guide { background: var(--bg2); }
+
+    .guide-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 40px; align-items: start; margin-top: 48px;
+    }
+
+    .guide-block {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .guide-block-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .guide-block-header span { font-size: 18px; }
+
+    .guide-block-header h3 {
+      font-size: 15px; font-weight: 700; letter-spacing: -.01em;
+    }
+
+    .guide-steps { padding: 20px; }
+
+    .guide-step {
+      display: flex; gap: 14px; margin-bottom: 18px;
+    }
+    .guide-step:last-child { margin-bottom: 0; }
+
+    .guide-step-num {
+      width: 26px; height: 26px; flex-shrink: 0;
+      background: var(--accent-lt); color: var(--accent);
+      border-radius: 50%; font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 1px;
+    }
+
+    .guide-step-body h4 {
+      font-size: 14px; font-weight: 600; margin-bottom: 3px;
+    }
+
+    .guide-step-body p { font-size: 13px; color: var(--text-2); line-height: 1.55; }
+
+    /* ── Footer ─────────────────────────────────────────────── */
+    footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 48px 0;
+    }
+
+    .footer-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 20px;
+    }
+
+    .footer-logo {
+      font-weight: 700; font-size: 16px; color: var(--text);
+      text-decoration: none;
+    }
+
+    .footer-links {
+      display: flex; gap: 24px; flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: var(--text-3); font-size: 14px; text-decoration: none;
+      transition: color .15s;
+    }
+    .footer-links a:hover { color: var(--text); }
+
+    .footer-claude {
+      font-size: 13px; color: var(--text-3);
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .footer-claude a { color: var(--accent); text-decoration: none; }
+
+    /* ── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      section { padding: 64px 0; }
+      .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+      .hero-visual { display: none; }
+      .steps { grid-template-columns: 1fr; }
+      .features-grid { grid-template-columns: 1fr; }
+      .ba-grid { grid-template-columns: 1fr; }
+      .ba-arrow { transform: rotate(90deg); display: block; text-align: center; padding: 8px 0; }
+      .download-cards { grid-template-columns: 1fr; }
+      .guide-grid { grid-template-columns: 1fr; }
+      .footer-inner { flex-direction: column; align-items: flex-start; }
+      .stats-row { grid-template-columns: 1fr; gap: 16px; }
+      .nav-links a:not(.btn-nav) { display: none; }
+    }
+
+    /* ── Animations ─────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-up {
+      opacity: 0;
+      animation: fadeUp .5s ease forwards;
+    }
+
+    .fade-up.d1 { animation-delay: .1s; }
+    .fade-up.d2 { animation-delay: .2s; }
+    .fade-up.d3 { animation-delay: .3s; }
+    .fade-up.d4 { animation-delay: .4s; }
+  </style>
+</head>
+<body>
+
+<!-- ── Nav ───────────────────────────────────────────────────── -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <svg viewBox="0 0 28 28" fill="none">
+        <rect width="28" height="28" rx="7" fill="#1d7a5f"/>
+        <path d="M8 14 L13 9 L13 13 L15 13 L15 9 L20 14 L15 19 L15 15 L13 15 L13 19 Z"
+              fill="white" opacity=".9"/>
+      </svg>
+      Shrinkify
+    </a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#guide">Guide</a>
+      <a href="https://github.com/nazimcanislam/shrinkify" target="_blank">GitHub</a>
+      <a href="#download" class="btn-nav">↓ Download</a>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">☀️</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ── Hero ──────────────────────────────────────────────────── -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div>
+        <div class="hero-eyebrow fade-up"><span></span> Free &amp; Open Source</div>
+        <h1 class="fade-up d1">Make your media library <em>breathe again.</em></h1>
+        <p class="hero-sub fade-up d2">
+          Shrinkify converts old H.264 videos and JPEG photos to modern H.265 and HEIF formats —
+          cutting your library size by up to 60% without losing a single pixel of quality.
+        </p>
+        <div class="hero-cta fade-up d3">
+          <a href="#download" class="btn-primary">↓ Download free</a>
+          <a href="https://github.com/nazimcanislam/shrinkify" class="btn-secondary" target="_blank">View on GitHub</a>
+        </div>
+      </div>
+
+      <div class="hero-visual fade-up d4">
+        <div class="disk-card">
+          <div class="disk-card-title">Live example — 65 GB Takeout folder</div>
+
+          <div class="disk-row">
+            <div class="disk-icon">🎬</div>
+            <div class="disk-info">
+              <div class="disk-name">vacation_2022.mp4</div>
+              <div class="disk-bar-track">
+                <div class="disk-bar-fill red" id="bar1" style="width:100%"></div>
+              </div>
+              <div class="disk-size"><s>739 MB</s> → <b id="s1">739 MB</b></div>
+            </div>
+          </div>
+
+          <div class="disk-row">
+            <div class="disk-icon">📸</div>
+            <div class="disk-info">
+              <div class="disk-name">IMG_0492.jpg</div>
+              <div class="disk-bar-track">
+                <div class="disk-bar-fill amber" id="bar2" style="width:100%"></div>
+              </div>
+              <div class="disk-size"><s>8.4 MB</s> → <b id="s2">8.4 MB</b></div>
+            </div>
+          </div>
+
+          <div class="disk-row">
+            <div class="disk-icon">🎥</div>
+            <div class="disk-info">
+              <div class="disk-name">birthday_party.mp4</div>
+              <div class="disk-bar-track">
+                <div class="disk-bar-fill red" id="bar3" style="width:100%"></div>
+              </div>
+              <div class="disk-size"><s>1.2 GB</s> → <b id="s3">1.2 GB</b></div>
+            </div>
+          </div>
+
+          <div class="disk-divider"></div>
+
+          <div class="disk-total">
+            <span class="disk-total-label">Total saved</span>
+            <span class="disk-total-value" id="totalSaved">calculating…</span>
+          </div>
+
+          <div class="disk-badge" id="diskBadge">⏳ Shrinking…</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-item">
+        <div class="stat-num">~60%</div>
+        <div class="stat-label">average size reduction on H.264 videos</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">~40%</div>
+        <div class="stat-label">average size reduction on JPEG photos</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">3</div>
+        <div class="stat-label">platforms — Windows, macOS, Linux</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── How it works ───────────────────────────────────────────── -->
+<section id="how">
+  <div class="container">
+    <div class="section-label">How it works</div>
+    <h2>Three steps. Zero quality loss.</h2>
+    <p class="section-sub">
+      Shrinkify does the technical heavy lifting so you don't have to know what H.265 means.
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01 — SELECT</div>
+        <span class="step-icon">📂</span>
+        <h3>Point it at a folder</h3>
+        <p>Drop in your Google Takeout export, camera roll backup, or any folder full of photos and videos.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02 — ANALYZE</div>
+        <span class="step-icon">🔍</span>
+        <h3>Let it scan</h3>
+        <p>Shrinkify reads every file's codec, bitrate, and format. Finds duplicate files. Shows you a detailed savings report before touching anything.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03 — SHRINK</div>
+        <span class="step-icon">✨</span>
+        <h3>One click to convert</h3>
+        <p>Converted files land in a <code>shrinkified/</code> folder. Originals are untouched. If a conversion makes a file bigger, it's automatically discarded.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features ───────────────────────────────────────────────── -->
+<section id="features">
+  <div class="container">
+    <div class="section-label">Features</div>
+    <h2>Everything your media library needs.</h2>
+    <p class="section-sub">Built for everyday people and power users alike.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🎬</div>
+        <h3>H.264 → H.265 video conversion</h3>
+        <p>Re-encodes old MP4, MOV, AVI, and MKV files to HEVC — the same quality, half the size. Uses your GPU automatically on Apple Silicon, NVIDIA, Intel, and AMD hardware.</p>
+        <span class="feature-tag">Up to 60% smaller</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📸</div>
+        <h3>JPEG &amp; PNG → HEIF conversion</h3>
+        <p>Converts photos to the modern HEIF format, the same format iPhones and recent Androids shoot in natively. EXIF metadata, GPS location, and date are fully preserved.</p>
+        <span class="feature-tag">Up to 40% smaller</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔁</div>
+        <h3>Duplicate file detection</h3>
+        <p>Finds files that are identical regardless of filename using fast file hashing. Shows you exactly which files are duplicates and lets you delete them safely.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Beautiful HTML report</h3>
+        <p>After every scan, Shrinkify generates a detailed report showing codec distribution, estimated savings breakdown, and a list of every file — organized into categories.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🗂️</div>
+        <h3>Folder structure preserved</h3>
+        <p>Enable "Preserve folder structure" and your subfolder hierarchy is mirrored inside the output folder. Your album organization stays intact.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>Originals are never touched</h3>
+        <p>Every converted file goes into a <code>shrinkified/</code> subfolder. Your source files are read-only. Dry run mode lets you preview results before committing.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Before / After ────────────────────────────────────────── -->
+<section id="results">
+  <div class="container">
+    <div class="section-label">Real results</div>
+    <h2>See the difference.</h2>
+    <p class="section-sub">These are actual results from a real Google Takeout export.</p>
+
+    <div class="ba-grid">
+      <div>
+        <div class="ba-side">
+          <h3>Before</h3>
+          <div class="ba-item">
+            <div class="ba-file-icon">🎬</div>
+            <div>
+              <div class="ba-file-name">vacation_2022.mp4</div>
+              <div class="ba-file-size">739 MB · H.264 · 16 Mbps</div>
+            </div>
+          </div>
+          <div class="ba-item">
+            <div class="ba-file-icon">📸</div>
+            <div>
+              <div class="ba-file-name">IMG_0042.jpg</div>
+              <div class="ba-file-size">8.4 MB · JPEG</div>
+            </div>
+          </div>
+          <div class="ba-item">
+            <div class="ba-file-icon">🎥</div>
+            <div>
+              <div class="ba-file-name">birthday_party.mp4</div>
+              <div class="ba-file-size">41 MB · H.264</div>
+            </div>
+          </div>
+          <div class="ba-item">
+            <div class="ba-file-icon">📸</div>
+            <div>
+              <div class="ba-file-name">photo_2023.jpg</div>
+              <div class="ba-file-size">5.2 MB · JPEG</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ba-arrow">→</div>
+
+      <div>
+        <div class="ba-side">
+          <h3>After Shrinkify</h3>
+          <div class="ba-item">
+            <div class="ba-file-icon">🎬</div>
+            <div>
+              <div class="ba-file-name">vacation_2022.mp4</div>
+              <div class="ba-file-size shrank">90 MB · H.265 · −88%</div>
+            </div>
+          </div>
+          <div class="ba-item">
+            <div class="ba-file-icon">📸</div>
+            <div>
+              <div class="ba-file-name">IMG_0042.heic</div>
+              <div class="ba-file-size shrank">5.0 MB · HEIF · −40%</div>
+            </div>
+          </div>
+          <div class="ba-item">
+            <div class="ba-file-icon">🎥</div>
+            <div>
+              <div class="ba-file-name">birthday_party.mp4</div>
+              <div class="ba-file-size shrank">17 MB · H.265 · −59%</div>
+            </div>
+          </div>
+          <div class="ba-item">
+            <div class="ba-file-icon">📸</div>
+            <div>
+              <div class="ba-file-name">photo_2023.heic</div>
+              <div class="ba-file-size shrank">3.1 MB · HEIF · −40%</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ba-savings-box">
+          <div>
+            <div class="ba-savings-label">Total saved in this example</div>
+          </div>
+          <div class="ba-savings-num">−676 MB</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Download ───────────────────────────────────────────────── -->
+<section id="download">
+  <div class="container">
+    <div class="section-label">Download</div>
+    <h2>Free on every platform.</h2>
+    <p class="section-sub">
+      Download the right version for your operating system. All builds are produced automatically by GitHub Actions.
+    </p>
+
+    <div class="download-cards">
+      <div class="dl-card" id="card-windows">
+        <span class="dl-platform-icon">🪟</span>
+        <h3>Windows</h3>
+        <div class="dl-badge">Tested ✓</div>
+        <p>Windows 10 or later. Installer-free — just download and run.</p>
+        <a href="https://github.com/nazimcanislam/shrinkify/releases/latest/download/Shrinkify.exe"
+           class="dl-btn">↓ Download .exe</a>
+      </div>
+      <div class="dl-card" id="card-macos">
+        <span class="dl-platform-icon">🍎</span>
+        <h3>macOS</h3>
+        <div class="dl-badge">Tested ✓</div>
+        <p>macOS 12 or later. Apple Silicon native. GPU acceleration via VideoToolbox.</p>
+        <a href="https://github.com/nazimcanislam/shrinkify/releases/latest/download/Shrinkify-macOS.zip"
+           class="dl-btn">↓ Download .zip</a>
+      </div>
+      <div class="dl-card" id="card-linux">
+        <span class="dl-platform-icon">🐧</span>
+        <h3>Linux</h3>
+        <div class="dl-badge">Community build</div>
+        <p>Ubuntu 22.04+. Run the binary directly. May require <code>chmod +x Shrinkify</code>.</p>
+        <a href="https://github.com/nazimcanislam/shrinkify/releases/latest/download/Shrinkify"
+           class="dl-btn secondary">↓ Download binary</a>
+      </div>
+    </div>
+
+    <div class="dl-note">
+      <strong>⚠ Requires ffmpeg</strong> — Shrinkify uses ffmpeg for video analysis and conversion.
+      Install it from <a href="https://ffmpeg.org/download.html" target="_blank">ffmpeg.org</a> and make sure it's in your system PATH.
+      On macOS: <code>brew install ffmpeg</code>. On Linux: <code>sudo apt install ffmpeg</code>.
+    </div>
+  </div>
+</section>
+
+<!-- ── Guide ──────────────────────────────────────────────────── -->
+<section id="guide">
+  <div class="container">
+    <div class="section-label">Quick start guide</div>
+    <h2>Up and running in minutes.</h2>
+
+    <div class="guide-grid">
+      <div class="guide-block">
+        <div class="guide-block-header">
+          <span>🗂️</span>
+          <h3>Folder mode — for large libraries</h3>
+        </div>
+        <div class="guide-steps">
+          <div class="guide-step">
+            <div class="guide-step-num">1</div>
+            <div class="guide-step-body">
+              <h4>Open Shrinkify and choose "Folder"</h4>
+              <p>The welcome screen lets you choose between a single file or an entire folder.</p>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="guide-step-num">2</div>
+            <div class="guide-step-body">
+              <h4>Select your folder and click Analyze</h4>
+              <p>Shrinkify scans every file, finds duplicates, and shows an estimated savings report.</p>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="guide-step-num">3</div>
+            <div class="guide-step-body">
+              <h4>Try Dry Run first</h4>
+              <p>Check "Dry run" to preview what would happen without touching any files.</p>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="guide-step-num">4</div>
+            <div class="guide-step-body">
+              <h4>Click Convert Files</h4>
+              <p>Converted files appear in a <code>shrinkified/</code> subfolder. Originals untouched.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="guide-block">
+        <div class="guide-block-header">
+          <span>📄</span>
+          <h3>Single file mode — quick convert</h3>
+        </div>
+        <div class="guide-steps">
+          <div class="guide-step">
+            <div class="guide-step-num">1</div>
+            <div class="guide-step-body">
+              <h4>Open Shrinkify and choose "Single File"</h4>
+              <p>Perfect for converting one video or photo without scanning a whole folder.</p>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="guide-step-num">2</div>
+            <div class="guide-step-body">
+              <h4>Browse to your file</h4>
+              <p>Supports MP4, MOV, AVI, MKV, JPG, PNG, HEIC, WEBP, and more.</p>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="guide-step-num">3</div>
+            <div class="guide-step-body">
+              <h4>Choose a quality preset</h4>
+              <p>Balanced is the recommended default. Maximum Shrink gives the smallest file. Conservative is safest for archival.</p>
+            </div>
+          </div>
+          <div class="guide-step">
+            <div class="guide-step-num">4</div>
+            <div class="guide-step-body">
+              <h4>Analyze then Convert</h4>
+              <p>The converted file lands next to the original in a <code>shrinkified/</code> folder.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ─────────────────────────────────────────────────── -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <a href="#" class="footer-logo">Shrinkify</a>
+      <div class="footer-links">
+        <a href="https://github.com/nazimcanislam/shrinkify" target="_blank">GitHub</a>
+        <a href="https://github.com/nazimcanislam/shrinkify/releases" target="_blank">Releases</a>
+        <a href="https://github.com/nazimcanislam/shrinkify/issues" target="_blank">Report a bug</a>
+        <a href="https://github.com/nazimcanislam/shrinkify/blob/main/shrinkify/README.md" target="_blank">README</a>
+      </div>
+      <div class="footer-claude">
+        🤝 Built in collaboration with <a href="https://claude.ai" target="_blank">Claude</a> (Anthropic)
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ── Theme ───────────────────────────────────────────────────
+  const toggle = document.getElementById('themeToggle');
+  const stored = localStorage.getItem('theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  let dark = stored ? stored === 'dark' : prefersDark;
+
+  function applyTheme() {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    toggle.textContent = dark ? '☀️' : '🌙';
+  }
+  applyTheme();
+
+  toggle.addEventListener('click', () => {
+    dark = !dark;
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+    applyTheme();
+  });
+
+  // ── Highlight download card based on OS ─────────────────────
+  const ua = navigator.userAgent.toLowerCase();
+  const platform = navigator.platform.toLowerCase();
+  let osCard = null;
+  if (platform.includes('win') || ua.includes('windows')) osCard = 'card-windows';
+  else if (platform.includes('mac') || ua.includes('mac')) osCard = 'card-macos';
+  else if (ua.includes('linux')) osCard = 'card-linux';
+  if (osCard) document.getElementById(osCard)?.classList.add('highlighted');
+
+  // ── Disk animation ──────────────────────────────────────────
+  const bars = [
+    { bar: 'bar1', size: 's1', from: 739, to: 90,  unit: 'MB' },
+    { bar: 'bar2', size: 's2', from: 8.4, to: 5.0, unit: 'MB' },
+    { bar: 'bar3', size: 's3', from: 1200, to: 291, unit: 'MB' },
+  ];
+  const total = { from: bars.reduce((s, b) => s + b.from, 0), to: bars.reduce((s, b) => s + b.to, 0) };
+
+  function animateValue(el, from, to, unit, duration) {
+    const start = performance.now();
+    function step(now) {
+      const t = Math.min((now - start) / duration, 1);
+      const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+      const val = from + (to - from) * ease;
+      el.textContent = val.toFixed(val < 10 ? 1 : 0) + ' ' + unit;
+      if (t < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function runDiskAnimation() {
+    bars.forEach((b, i) => {
+      const barEl  = document.getElementById(b.bar);
+      const sizeEl = document.getElementById(b.size);
+      const pct = (b.to / b.from) * 100;
+      setTimeout(() => {
+        barEl.style.width = pct + '%';
+        animateValue(sizeEl, b.from, b.to, b.unit, 1200);
+      }, i * 300 + 400);
+    });
+
+    const totalEl = document.getElementById('totalSaved');
+    const badgeEl = document.getElementById('diskBadge');
+    const saved = total.from - total.to;
+    setTimeout(() => {
+      animateValue({ textContent: '' }, 0, saved, 'MB saved', 1000);
+      const start = performance.now();
+      function stepTotal(now) {
+        const t = Math.min((now - start) / 1000, 1);
+        const ease = t < 0.5 ? 2*t*t : -1+(4-2*t)*t;
+        const val = saved * ease;
+        totalEl.textContent = '−' + val.toFixed(0) + ' MB';
+        if (t < 1) requestAnimationFrame(stepTotal);
+      }
+      requestAnimationFrame(stepTotal);
+      badgeEl.textContent = '✓ Done — ' + ((saved / total.from) * 100).toFixed(0) + '% saved';
+      badgeEl.style.background = 'var(--accent-lt)';
+      badgeEl.style.color = 'var(--accent)';
+    }, bars.length * 300 + 1200);
+  }
+
+  // Run once when card enters viewport
+  const heroVisual = document.querySelector('.hero-visual');
+  const observer = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) {
+      runDiskAnimation();
+      observer.disconnect();
+    }
+  }, { threshold: 0.4 });
+  if (heroVisual) observer.observe(heroVisual);
+</script>
+</body>
+</html>
