@@ -119,7 +119,6 @@ jobs:
 
       - name: Build executable
         run: |
-          cd shrinkify
           pyinstaller --onefile --name=Shrinkify gui.py \
             --hidden-import=pillow_heif \
             --hidden-import=PIL \
