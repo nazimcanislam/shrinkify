@@ -30,7 +30,6 @@ jobs:
 
       - name: Build executable
         run: |
-          cd shrinkify
           pyinstaller --onefile --windowed --icon=icon.ico --name=Shrinkify gui.py `
             --hidden-import=pillow_heif `
             --hidden-import=PIL `
@@ -43,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Shrinkify-Windows
-          path: shrinkify/dist/Shrinkify.exe
+          path: dist/Shrinkify.exe
 
   # ── macOS ─────────────────────────────────────────────────────
   build-macos:
@@ -69,7 +68,6 @@ jobs:
 
       - name: Build executable
         run: |
-          cd shrinkify
           pyinstaller --onefile --windowed --icon=icon.png --name=Shrinkify gui.py \
             --hidden-import=pillow_heif \
             --hidden-import=PIL \
@@ -80,14 +78,14 @@ jobs:
 
       - name: Zip the .app bundle
         run: |
-          cd shrinkify/dist
+          cd dist
           zip -r Shrinkify-macOS.zip Shrinkify
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: Shrinkify-macOS
-          path: shrinkify/dist/Shrinkify-macOS.zip
+          path: dist/Shrinkify-macOS.zip
 
   # ── Linux ─────────────────────────────────────────────────────
   build-linux:
@@ -134,7 +132,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Shrinkify-Linux
-          path: shrinkify/dist/Shrinkify
+          path: dist/Shrinkify
 
   # ── Release ───────────────────────────────────────────────────
   release:
