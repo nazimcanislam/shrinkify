@@ -53,6 +53,8 @@ Dry run:
                         help='Quality preset (default: balanced)')
     parser.add_argument('--copy-originals',   action='store_true',
                         help='Also copy unconverted files to output folder')
+    parser.add_argument('--preserve-structure', action='store_true',
+                        help='Preserve subfolder structure inside shrinkified/')
     parser.add_argument('--duplicates',       action='store_true', help='Delete duplicate files')
     parser.add_argument('--dry-run',          action='store_true', help='Simulate — no files modified')
     parser.add_argument('--no-hash',          action='store_true', help='Skip hash computation')
@@ -109,6 +111,8 @@ Dry run:
             for i, mf in enumerate(candidates, 1):
                 print(f"  [{i}/{len(candidates)}] {mf.filename}")
                 result = convert_file(mf, shrinkified_dir=shrinkified_dir,
+                                      scan_root=scan_dir,
+                                      preserve_structure=args.preserve_structure,
                                       use_hw_accel=args.hw_accel,
                                       dry_run=args.dry_run, preset=args.preset)
                 if result.success:
@@ -124,7 +128,10 @@ Dry run:
 
         if args.copy_originals:
             print(f"  Copying unconverted files{dry_label}...")
-            copied, copied_bytes = copy_unconverted(media_files, shrinkified_dir, dry_run=args.dry_run)
+            copied, copied_bytes = copy_unconverted(media_files, shrinkified_dir,
+                                                       scan_root=scan_dir,
+                                                       preserve_structure=args.preserve_structure,
+                                                       dry_run=args.dry_run)
             print(f"  → {copied} files copied ({_fmt_size(copied_bytes)})\n")
     else:
         print("  [4/4] Conversion skipped (add --convert to enable)\n")
