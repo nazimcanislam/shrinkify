@@ -1,0 +1,176 @@
+name: Build Shrinkify
+
+on:
+  push:
+    tags:
+      - 'v*'          # Trigger on version tags like v1.0.0
+  workflow_dispatch:  # Allow manual trigger from GitHub UI
+
+permissions:
+  contents: write     # Needed to create GitHub Releases
+
+jobs:
+  # ── Windows ──────────────────────────────────────────────────
+  build-windows:
+    name: Build — Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pillow pillow-heif pyinstaller
+
+      - name: Build executable
+        run: |
+          cd shrinkify
+          pyinstaller --onefile --windowed --icon=icon.ico --name=Shrinkify gui.py `
+            --hidden-import=pillow_heif `
+            --hidden-import=PIL `
+            --hidden-import=PIL.Image `
+            --collect-all pillow_heif `
+            --add-data "icon.png;." `
+            --add-data "icon.ico;."
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shrinkify-Windows
+          path: shrinkify/dist/Shrinkify.exe
+
+  # ── macOS ─────────────────────────────────────────────────────
+  build-macos:
+    name: Build — macOS
+    runs-on: macos-latest     # Apple Silicon (M-series)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install system dependencies
+        run: |
+          brew install libheif
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pillow pillow-heif pyinstaller
+
+      - name: Build executable
+        run: |
+          cd shrinkify
+          pyinstaller --onefile --windowed --icon=icon.png --name=Shrinkify gui.py \
+            --hidden-import=pillow_heif \
+            --hidden-import=PIL \
+            --hidden-import=PIL.Image \
+            --collect-all pillow_heif \
+            --add-data "icon.png:." \
+            --add-data "icon.ico:."
+
+      - name: Zip the .app bundle
+        run: |
+          cd shrinkify/dist
+          zip -r Shrinkify-macOS.zip Shrinkify
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shrinkify-macOS
+          path: shrinkify/dist/Shrinkify-macOS.zip
+
+  # ── Linux ─────────────────────────────────────────────────────
+  build-linux:
+    name: Build — Linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y \
+            libheif-dev \
+            libheif1 \
+            python3-tk \
+            tk-dev \
+            libx11-dev \
+            libxft-dev \
+            libxext-dev
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pillow pillow-heif pyinstaller
+
+      - name: Build executable
+        run: |
+          cd shrinkify
+          pyinstaller --onefile --name=Shrinkify gui.py \
+            --hidden-import=pillow_heif \
+            --hidden-import=PIL \
+            --hidden-import=PIL.Image \
+            --collect-all pillow_heif \
+            --add-data "icon.png:." \
+            --add-data "icon.ico:."
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shrinkify-Linux
+          path: shrinkify/dist/Shrinkify
+
+  # ── Release ───────────────────────────────────────────────────
+  release:
+    name: Create GitHub Release
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Shrinkify ${{ github.ref_name }}
+          body: |
+            ## Shrinkify ${{ github.ref_name }}
+
+            Media optimization tool — convert H.264 → H.265, JPEG → HEIF, detect duplicates.
+
+            ### Downloads
+
+            | Platform | File |
+            |---|---|
+            | Windows | `Shrinkify.exe` |
+            | macOS | `Shrinkify-macOS.zip` |
+            | Linux | `Shrinkify` |
+
+            **Requirements:** [ffmpeg](https://ffmpeg.org/download.html) must be installed and available in PATH.
+
+            Built with Python + ffmpeg + pillow-heif.
+          files: |
+            artifacts/Shrinkify-Windows/Shrinkify.exe
+            artifacts/Shrinkify-macOS/Shrinkify-macOS.zip
+            artifacts/Shrinkify-Linux/Shrinkify
+          draft: false
+          prerelease: false
