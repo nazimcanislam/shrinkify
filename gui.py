@@ -674,11 +674,11 @@ class ShrinkifyApp(tk.Tk):
             self._log_msg('\n✓ Analysis complete.\n', 'accent')
 
             self.after(0, lambda: self._btn_convert.config(
-                state=tk.NORMAL, text='⚙️  Convert Files'))
+                state=tk.NORMAL, text='Convert Files'))
             if self._btn_duplicates:
                 self.after(0, lambda: self._btn_duplicates.config(
                     state=tk.NORMAL if summary.duplicate_count > 0 else tk.DISABLED,
-                    text='🗑  Delete Duplicates'))
+                    text='Delete Duplicates'))
 
         except Exception as e:
             self._log_err(f'Unexpected error: {e}')
@@ -762,7 +762,7 @@ class ShrinkifyApp(tk.Tk):
         except Exception as e:
             self._log_err(f'Unexpected error during conversion: {e}')
         finally:
-            self._done_action(self._btn_convert, '⚙️  Convert Files')
+            self._done_action(self._btn_convert, 'Convert Files')
 
     def _run_delete_dupes(self, dry_run):
         try:
@@ -775,12 +775,12 @@ class ShrinkifyApp(tk.Tk):
         except Exception as e:
             self._log_err(f'Unexpected error during deletion: {e}')
         finally:
-            self._done_action(self._btn_duplicates, '🗑  Delete Duplicates')
+            self._done_action(self._btn_duplicates, 'Delete Duplicates')
 
     # ── State helpers ─────────────────────────────────────────
     def _done_scan(self):
         self._running = False
-        self.after(0, lambda: self._btn_scan.config(state=tk.NORMAL, text='🔍  Analyze'))
+        self.after(0, lambda: self._btn_scan.config(state=tk.NORMAL, text='Analyze'))
 
     def _done_action(self, btn, label):
         self._running = False
