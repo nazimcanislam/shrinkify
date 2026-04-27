@@ -1,4 +1,52 @@
-venv/
+# ── Python ────────────────────────────────────────────────────
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
 dist/
 build/
+*.spec.bak
+
+# ── PyInstaller ────────────────────────────────────────────────
+# Keep Shrinkify.spec (intentional), ignore everything PyInstaller generates
+shrinkify/dist/
+shrinkify/build/
+# Root-level dist/build if pyinstaller is run from repo root
+dist/
+build/
+
+# ── Shrinkify runtime output ───────────────────────────────────
+shrinkify_report.html
+shrinkify_log.txt
+shrinkified/
+
+# ── Virtual environments ───────────────────────────────────────
+.venv/
+venv/
+env/
+.env
+
+# ── OS junk ───────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ── IDEs ──────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ── Misc ──────────────────────────────────────────────────────
+*.log
+*.tmp
+*.bak
