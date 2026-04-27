@@ -154,6 +154,14 @@ def generate_html_report(
   .badge-error  {{ background: rgba(251,191,36,0.15);  color: var(--yellow); border: 1px solid rgba(251,191,36,0.3); }}
   .savings-cell {{ color: var(--green); font-weight: 700; }}
   .reason-cell  {{ color: var(--accent2); }}
+  th.sortable {{ cursor: pointer; user-select: none; }}
+  th.sortable:hover {{ color: var(--accent); }}
+  th.sortable .sort-icon {{ display: inline-block; margin-left: 5px; opacity: 0.35; font-style: normal; font-size: 9px; }}
+  th.sortable.asc .sort-icon::after {{ content: '▲'; opacity: 1; }}
+  th.sortable.desc .sort-icon::after {{ content: '▼'; opacity: 1; }}
+  th.sortable:not(.asc):not(.desc) .sort-icon::after {{ content: '⇅'; }}
+  th.sortable.asc {{ color: var(--accent); }}
+  th.sortable.desc {{ color: var(--accent); }}
 
   .charts-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 48px; }}
   .chart-card {{ background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }}
@@ -280,6 +288,53 @@ def generate_html_report(
   </div>
 
 </div>
+<script>
+(function() {{
+  function parseBytes(str) {{
+    if (!str) return 0;
+    str = str.replace(/[−\\-]/g, '').trim();
+    // Strip percentage part like "(%70)"
+    str = str.replace(/\\s*\\([^)]*\\)\\s*$/, '').trim();
+    var units = {{'B':1,'KB':1024,'MB':1024*1024,'GB':1024*1024*1024}};
+    var m = str.match(/^([\\d.,]+)\\s*([A-Z]+)$/);
+    if (!m) return parseFloat(str.replace(/,/g,'')) || 0;
+    return parseFloat(m[1].replace(/,/g,'')) * (units[m[2]] || 1);
+  }}
+
+  function cellVal(td) {{
+    var raw = td.dataset.sort !== undefined ? td.dataset.sort : td.textContent.trim();
+    var n = parseFloat(String(raw).replace(/,/g,''));
+    if (!isNaN(n) && String(raw).replace(/,/g,'').match(/^-?[\\d.]+$/)) return n;
+    // size strings
+    var b = parseBytes(raw);
+    if (b > 0) return b;
+    return String(raw).toLowerCase();
+  }}
+
+  function makeSortable(table) {{
+    var ths = table.querySelectorAll('thead th.sortable');
+    ths.forEach(function(th, colIdx) {{
+      th.addEventListener('click', function() {{
+        var asc = th.classList.contains('asc') ? false : true;
+        ths.forEach(function(t) {{ t.classList.remove('asc','desc'); }});
+        th.classList.add(asc ? 'asc' : 'desc');
+        var tbody = table.querySelector('tbody');
+        var rows = Array.from(tbody.querySelectorAll('tr'));
+        rows.sort(function(a, b) {{
+          var tdA = a.querySelectorAll('td')[colIdx];
+          var tdB = b.querySelectorAll('td')[colIdx];
+          var vA = cellVal(tdA), vB = cellVal(tdB);
+          if (typeof vA === 'number' && typeof vB === 'number') return asc ? vA - vB : vB - vA;
+          return asc ? String(vA).localeCompare(String(vB)) : String(vB).localeCompare(String(vA));
+        }});
+        rows.forEach(function(r) {{ tbody.appendChild(r); }});
+      }});
+    }});
+  }}
+
+  document.querySelectorAll('table').forEach(makeSortable);
+}})();
+</script>
 </body>
 </html>"""
 
@@ -288,7 +343,7 @@ def generate_html_report(
 
 def _bar_item(label: str, value: int, max_val: int, color: str) -> str:
     pct = (value / max_val * 100) if max_val > 0 else 0
-    return f'<div class="bar-item"><div class="bar-label">{label}</div><div class="bar-track"><div class="bar-fill" style="width:{pct:.0f}%;background:{color};"></div></div><div class="bar-count">{value}</div></div>'
+    return f'<div class="bar-item"><div class="bar-label">{label}</div><div class="bar-track"><div class="bar-fill" style="width:{pct:.0f}%;background:{color};"></div></div><div class="bar-count">{value:,}</div></div>'
 
 
 def _conversion_table(files: list[MediaFile]) -> str:
@@ -298,10 +353,23 @@ def _conversion_table(files: list[MediaFile]) -> str:
     for mf in files:
         est = mf.estimated_output_size_bytes or 0
         saving = mf.size_bytes - est
+        pct = (saving / mf.size_bytes * 100) if mf.size_bytes > 0 else 0
         badge = 'badge-video' if mf.media_type == 'video' else 'badge-image'
         badge_text = 'VIDEO' if mf.media_type == 'video' else 'IMAGE'
-        rows.append(f'<tr><td class="filename-cell" title="{mf.path}">{mf.filename}</td><td><span class="badge {badge}">{badge_text}</span></td><td>{_fmt_size(mf.size_bytes)}</td><td>{_fmt_size(est)}</td><td class="savings-cell">−{_fmt_size(saving)}</td><td class="reason-cell">{mf.conversion_reason or "—"}</td></tr>')
-    return f'<div class="table-wrap"><table><thead><tr><th>Filename</th><th>Type</th><th>Current</th><th>Estimated</th><th>Savings</th><th>Action</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>'
+        savings_str = f'−{_fmt_size(saving)} ({pct:.1f}%)'
+        rows.append(f'<tr>'
+                    f'<td class="filename-cell" title="{mf.path}">{mf.filename}</td>'
+                    f'<td><span class="badge {badge}">{badge_text}</span></td>'
+                    f'<td data-sort="{mf.size_bytes}">{_fmt_size(mf.size_bytes)}</td>'
+                    f'<td data-sort="{est}">{_fmt_size(est)}</td>'
+                    f'<td class="savings-cell" data-sort="{saving}">{savings_str}</td>'
+                    f'<td class="reason-cell">{mf.conversion_reason or "—"}</td>'
+                    f'</tr>')
+    th = lambda label: f'<th class="sortable">{label}<i class="sort-icon"></i></th>'
+    header = (f'<tr>'
+              f'{th("Filename")}{th("Type")}{th("Current")}{th("Estimated")}{th("Savings")}{th("Action")}'
+              f'</tr>')
+    return f'<div class="table-wrap"><table><thead>{header}</thead><tbody>{"".join(rows)}</tbody></table></div>'
 
 
 def _duplicate_table(files: list[MediaFile]) -> str:
@@ -309,8 +377,15 @@ def _duplicate_table(files: list[MediaFile]) -> str:
         return '<div style="color:var(--text-muted);padding:20px;font-family:var(--mono-font);font-size:12px;">No duplicates found.</div>'
     rows = []
     for mf in files:
-        rows.append(f'<tr><td class="filename-cell" title="{mf.path}">{mf.filename}</td><td>{_fmt_size(mf.size_bytes)}</td><td class="filename-cell" title="{mf.duplicate_of}">{mf.duplicate_of.name if mf.duplicate_of else "—"}</td><td><span class="badge badge-dup">DUPLICATE</span></td></tr>')
-    return f'<div class="table-wrap"><table><thead><tr><th>Filename</th><th>Size</th><th>Original</th><th>Status</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>'
+        rows.append(f'<tr>'
+                    f'<td class="filename-cell" title="{mf.path}">{mf.filename}</td>'
+                    f'<td data-sort="{mf.size_bytes}">{_fmt_size(mf.size_bytes)}</td>'
+                    f'<td class="filename-cell" title="{mf.duplicate_of}">{mf.duplicate_of.name if mf.duplicate_of else "—"}</td>'
+                    f'<td><span class="badge badge-dup">DUPLICATE</span></td>'
+                    f'</tr>')
+    th = lambda label: f'<th class="sortable">{label}<i class="sort-icon"></i></th>'
+    header = f'<tr>{th("Filename")}{th("Size")}{th("Original")}{th("Status")}</tr>'
+    return f'<div class="table-wrap"><table><thead>{header}</thead><tbody>{"".join(rows)}</tbody></table></div>'
 
 
 def _modern_table(files: list[MediaFile]) -> str:
@@ -321,8 +396,15 @@ def _modern_table(files: list[MediaFile]) -> str:
         codec = mf.video_codec.upper() if mf.video_codec else (mf.image_format or '—')
         badge = 'badge-video' if mf.media_type == 'video' else 'badge-image'
         badge_text = 'VIDEO' if mf.media_type == 'video' else 'IMAGE'
-        rows.append(f'<tr><td class="filename-cell" title="{mf.path}">{mf.filename}</td><td><span class="badge {badge}">{badge_text}</span></td><td>{_fmt_size(mf.size_bytes)}</td><td><span class="badge badge-modern">{codec}</span></td></tr>')
-    return f'<div class="table-wrap"><table><thead><tr><th>Filename</th><th>Type</th><th>Size</th><th>Format</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>'
+        rows.append(f'<tr>'
+                    f'<td class="filename-cell" title="{mf.path}">{mf.filename}</td>'
+                    f'<td><span class="badge {badge}">{badge_text}</span></td>'
+                    f'<td data-sort="{mf.size_bytes}">{_fmt_size(mf.size_bytes)}</td>'
+                    f'<td><span class="badge badge-modern">{codec}</span></td>'
+                    f'</tr>')
+    th = lambda label: f'<th class="sortable">{label}<i class="sort-icon"></i></th>'
+    header = f'<tr>{th("Filename")}{th("Type")}{th("Size")}{th("Format")}</tr>'
+    return f'<div class="table-wrap"><table><thead>{header}</thead><tbody>{"".join(rows)}</tbody></table></div>'
 
 
 def _error_section(files: list[MediaFile]) -> str:
@@ -330,8 +412,15 @@ def _error_section(files: list[MediaFile]) -> str:
         return ''
     rows = []
     for mf in files:
-        rows.append(f'<tr><td class="filename-cell" title="{mf.path}">{mf.filename}</td><td>{_fmt_size(mf.size_bytes)}</td><td><span class="badge badge-error">SCAN ERROR</span></td><td style="color:var(--yellow);font-size:11px;">{mf.scan_error or "—"}</td></tr>')
-    table = f'<div class="table-wrap"><table><thead><tr><th>Filename</th><th>Size</th><th>Status</th><th>Reason</th></tr></thead><tbody>{"".join(rows)}</tbody></table></div>'
+        rows.append(f'<tr>'
+                    f'<td class="filename-cell" title="{mf.path}">{mf.filename}</td>'
+                    f'<td data-sort="{mf.size_bytes}">{_fmt_size(mf.size_bytes)}</td>'
+                    f'<td><span class="badge badge-error">SCAN ERROR</span></td>'
+                    f'<td style="color:var(--yellow);font-size:11px;">{mf.scan_error or "—"}</td>'
+                    f'</tr>')
+    th = lambda label: f'<th class="sortable">{label}<i class="sort-icon"></i></th>'
+    header = f'<tr>{th("Filename")}{th("Size")}{th("Status")}{th("Reason")}</tr>'
+    table = f'<div class="table-wrap"><table><thead>{header}</thead><tbody>{"".join(rows)}</tbody></table></div>'
     return f'<div class="section"><div class="section-header"><div class="section-title">⚠️ Scan Errors</div><div class="section-badge">{len(files)} files</div></div>{table}</div>'
 
 
