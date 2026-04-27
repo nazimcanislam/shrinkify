@@ -25,7 +25,7 @@ _FS = 1 if not _IS_MACOS else 1   # multiplier reserved; actual bump via sizes b
 
 from core.scanner import scan_directory, scan_file, compute_hashes, find_duplicates
 from core.analyzer import analyze_all, QUALITY_PRESETS, DEFAULT_PRESET
-from core.converter import convert_file, copy_unconverted, delete_duplicates, get_hw_encoder
+from core.converter import convert_file, copy_unconverted, copy_size_skipped, delete_duplicates, get_hw_encoder
 from core.reporter import generate_html_report, _fmt_size
 
 COLORS = {
@@ -390,8 +390,18 @@ class ShrinkifyApp(tk.Tk):
                             insertbackground=COLORS['accent'],
                             selectbackground=COLORS['surface2'],
                             wrap=tk.WORD, state=tk.DISABLED)
-        scrollbar = tk.Scrollbar(log_frame, command=self._log.yview,
-                                 bg=COLORS['surface2'], troughcolor=COLORS['surface'])
+        # Style the scrollbar to match dark theme
+        _sb_style = ttk.Style()
+        _sb_style.configure('Dark.Vertical.TScrollbar',
+                            background=COLORS['border'],
+                            troughcolor=COLORS['surface'],
+                            arrowcolor=COLORS['text_muted'],
+                            bordercolor=COLORS['surface'],
+                            darkcolor=COLORS['surface'],
+                            lightcolor=COLORS['surface'])
+        scrollbar = ttk.Scrollbar(log_frame, orient=tk.VERTICAL,
+                                  command=self._log.yview,
+                                  style='Dark.Vertical.TScrollbar')
         self._scrollbar = scrollbar
         self._log.config(yscrollcommand=lambda f, l: (
             scrollbar.set(f, l), self._track_scroll(f, l)))
@@ -681,7 +691,6 @@ class ShrinkifyApp(tk.Tk):
             _, _, preset_label, _ = QUALITY_PRESETS[preset]
             dry_label = ' (DRY RUN)' if dry_run else ''
 
-            # Show which encoder will be used
             if hw_accel:
                 hw = get_hw_encoder()
                 enc_info = f'encoder: {hw}' if hw else 'encoder: libx265 (no hw found)'
@@ -694,6 +703,7 @@ class ShrinkifyApp(tk.Tk):
             total_saved = 0
             success_count = 0
             fail_count = 0
+            size_skipped: list = []   # files where output was larger than original
 
             for i, mf in enumerate(candidates, 1):
                 pct = int(i / len(candidates) * (80 if copy_orig else 100))
@@ -710,6 +720,11 @@ class ShrinkifyApp(tk.Tk):
                         f'{mf.filename}  '
                         f'{_fmt_size(result.original_size_bytes)} → {_fmt_size(result.final_size_bytes)}'
                         f'  (−{_fmt_size(result.size_saved_bytes)})')
+                elif result.skipped_due_to_size:
+                    # Conversion was attempted but output was larger — keep original.
+                    # If copy_orig is on, these must also land in shrinkified/.
+                    size_skipped.append(mf)
+                    self._log_skip(f'{mf.filename}: {result.skip_reason}')
                 elif result.skipped:
                     self._log_skip(f'{mf.filename}: {result.skip_reason}')
                 else:
@@ -721,13 +736,26 @@ class ShrinkifyApp(tk.Tk):
                 f'saved: {_fmt_size(total_saved)}')
 
             if copy_orig:
-                self._log_section(f'Copying unconverted files{dry_label}')
-                self._set_progress(85, 'Copying originals…')
-                copied, copied_bytes = copy_unconverted(
+                self._log_section(f'Copying to output folder{dry_label}')
+                self._set_progress(85, 'Copying…')
+
+                # 1. Files that were never candidates (already modern format)
+                copied1, bytes1 = copy_unconverted(
                     self._media_files, shrinkified_dir,
                     scan_root=self._scan_path, preserve_structure=preserve,
                     dry_run=dry_run)
-                self._log_info(f'{copied} files copied ({_fmt_size(copied_bytes)})')
+
+                # 2. Files that were candidates but kept because output was larger
+                copied2, bytes2 = copy_size_skipped(
+                    size_skipped, shrinkified_dir,
+                    scan_root=self._scan_path, preserve_structure=preserve,
+                    dry_run=dry_run)
+
+                total_copied = copied1 + copied2
+                total_bytes  = bytes1  + bytes2
+                self._log_info(
+                    f'{total_copied} files copied ({_fmt_size(total_bytes)})  '
+                    f'[{copied1} unconverted + {copied2} kept-as-original]')
 
             self._set_progress(100, 'Conversion complete ✓')
             self._log_msg('\n✓ Conversion complete.\n', 'accent')

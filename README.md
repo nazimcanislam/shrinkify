@@ -196,6 +196,37 @@ shrinkify/
 
 ---
 
+## HEIF & HEVC Compatibility
+
+Before converting your entire library, check whether your devices can open the output files.
+
+### What is well-supported ✅
+
+| Platform | HEIF photos | H.265 video |
+|---|---|---|
+| Windows 10 / 11 | ✅ (requires free [HEVC Video Extensions](https://apps.microsoft.com/detail/9nmzlz57r3t7) from the Microsoft Store) | ✅ same extension |
+| macOS High Sierra (10.13)+ | ✅ native | ✅ native |
+| iOS 11+ | ✅ native (iPhone shoots HEIF by default) | ✅ native |
+| Android 9+ | ✅ most devices | ✅ most devices |
+| Modern Smart TVs (2018+) | ✅ most | ✅ most |
+| VLC (all platforms) | ✅ | ✅ |
+
+### Where you may run into issues ⚠️
+
+| Platform | Notes |
+|---|---|
+| Windows 7 / 8 / 8.1 | No native HEIF or H.265 support. VLC can still play the videos. |
+| Android 8 and older | Inconsistent — depends on manufacturer and hardware decoder |
+| Old Smart TVs (pre-2018) | Often no H.265 hardware decoder |
+| Some older digital photo frames | HEIF not supported |
+
+### Recommendation
+
+If you share files with people on old devices, keep the originals or use the **Conservative** preset which produces slightly larger files that remain H.265/HEIF — the format itself is the limiting factor, not the quality setting. For personal archival use on modern devices (2018+), converting is safe.
+
+---
+
 ## License
 
 MIT
+

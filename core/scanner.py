@@ -5,6 +5,8 @@ scanner.py — Scans media files using ffprobe.
 import subprocess
 import json
 import os
+import sys
+import shutil
 import hashlib
 import logging
 from dataclasses import dataclass
@@ -15,6 +17,64 @@ logger = logging.getLogger(__name__)
 
 SUPPORTED_VIDEO_EXTENSIONS = {'.mp4', '.mov', '.avi', '.mkv', '.wmv', '.flv', '.webm', '.m4v', '.3gp', '.ts'}
 SUPPORTED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.heic', '.heif', '.tiff', '.tif', '.bmp', '.webp'}
+
+
+def _find_binary(name: str) -> str:
+    """
+    Finds an external binary (ffmpeg / ffprobe) more robustly than shutil.which alone.
+
+    When running as a PyInstaller --windowed exe on Windows, double-clicking the app
+    may give it a restricted PATH that omits user-installed tools. We therefore also
+    check common installation locations and the directory that contains the running
+    executable.
+    """
+    # 1. Standard PATH lookup
+    found = shutil.which(name)
+    if found:
+        return found
+
+    # 2. Same directory as the running executable (useful when bundled or portable)
+    exe_dir = Path(sys.executable).parent
+    candidate = exe_dir / (name + ('.exe' if sys.platform == 'win32' else ''))
+    if candidate.exists():
+        return str(candidate)
+
+    # 3. PyInstaller _MEIPASS temp dir (--onefile extracts here at runtime)
+    meipass = getattr(sys, '_MEIPASS', None)
+    if meipass:
+        candidate = Path(meipass) / (name + ('.exe' if sys.platform == 'win32' else ''))
+        if candidate.exists():
+            return str(candidate)
+
+    # 4. Common Windows installation paths
+    if sys.platform == 'win32':
+        win_paths = [
+            Path(os.environ.get('LOCALAPPDATA', '')) / 'Programs' / 'ffmpeg' / 'bin' / f'{name}.exe',
+            Path('C:/ffmpeg/bin') / f'{name}.exe',
+            Path('C:/Program Files/ffmpeg/bin') / f'{name}.exe',
+            Path('C:/Program Files (x86)/ffmpeg/bin') / f'{name}.exe',
+        ]
+        for p in win_paths:
+            if p.exists():
+                return str(p)
+
+    # 5. Common macOS Homebrew paths
+    if sys.platform == 'darwin':
+        mac_paths = [
+            Path('/usr/local/bin') / name,          # Intel Homebrew
+            Path('/opt/homebrew/bin') / name,        # Apple Silicon Homebrew
+        ]
+        for p in mac_paths:
+            if p.exists():
+                return str(p)
+
+    # Fallback — return the bare name and let subprocess report the error
+    return name
+
+
+# Resolve once at import time so every subprocess call uses the same path
+_FFPROBE = _find_binary('ffprobe')
+_FFMPEG  = _find_binary('ffmpeg')
 
 
 @dataclass
@@ -79,7 +139,7 @@ def _no_window() -> dict:
 def _run_ffprobe(file_path: Path) -> Optional[dict]:
     """Runs ffprobe and returns parsed JSON. Returns None on any failure."""
     cmd = [
-        'ffprobe', '-v', 'quiet',
+        _FFPROBE, '-v', 'quiet',
         '-print_format', 'json',
         '-show_format', '-show_streams',
         str(file_path)
