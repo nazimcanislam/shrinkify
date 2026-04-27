@@ -18,6 +18,29 @@ try:
 except Exception:
     pass
 
+def _apply_dark_titlebar(hwnd):
+    """Enable dark mode title bar on Windows 10 1809+ / Windows 11."""
+    try:
+        DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+        ctypes.windll.dwmapi.DwmSetWindowAttribute(
+            hwnd,
+            DWMWA_USE_IMMERSIVE_DARK_MODE,
+            ctypes.byref(ctypes.c_int(1)),
+            ctypes.sizeof(ctypes.c_int)
+        )
+    except Exception:
+        # Older Windows builds use attribute 19
+        try:
+            DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19
+            ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                hwnd,
+                DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1,
+                ctypes.byref(ctypes.c_int(1)),
+                ctypes.sizeof(ctypes.c_int)
+            )
+        except Exception:
+            pass
+
 # ── macOS font scaling ────────────────────────────────────────
 # On Retina displays tkinter uses logical pixels; bump base sizes slightly.
 _IS_MACOS = sys.platform == 'darwin'
@@ -112,7 +135,7 @@ class ModeScreen(tk.Frame):
         spacer2.pack(expand=True, fill=tk.BOTH)
 
     def _make_card(self, parent, icon, title, desc, mode) -> tk.Frame:
-        W, H = (200 if _IS_MACOS else 180), (180 if _IS_MACOS else 160)
+        W, H = (200 if _IS_MACOS else 180), (200 if _IS_MACOS else 185)
 
         card = tk.Frame(parent, bg=COLORS['surface'],
                         width=W, height=H, cursor='hand2')
@@ -130,7 +153,7 @@ class ModeScreen(tk.Frame):
                  fg=COLORS['text'], font=UI_BOLD).pack()
         tk.Label(inner, text=desc, bg=COLORS['surface'],
                  fg=COLORS['text_muted'], font=UI_LABEL,
-                 justify=tk.CENTER).pack(pady=(6, 0))
+                 justify=tk.CENTER, wraplength=W - 32).pack(pady=(6, 0))
 
         def on_enter(_):
             card.config(bg=COLORS['surface2'])
@@ -195,7 +218,42 @@ class ShrinkifyApp(tk.Tk):
         self._log_autoscroll  = True
         self._ffmpeg_ok       = False
 
+        self.protocol('WM_DELETE_WINDOW', self._on_close_request)
+
+        # Center window on screen
+        self.update_idletasks()
+        w = self.winfo_width()
+        h = self.winfo_height()
+        sw = self.winfo_screenwidth()
+        sh = self.winfo_screenheight()
+        x = (sw - w) // 2
+        y = (sh - h) // 2
+        self.geometry(f'{w}x{h}+{x}+{y}')
+
+        # Dark title bar on Windows
+        if sys.platform == 'win32':
+            self.update()
+            try:
+                hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
+                _apply_dark_titlebar(hwnd)
+            except Exception:
+                pass
+
         self._show_mode_screen()
+
+    # ── Window close guard ────────────────────────────────────
+    def _on_close_request(self):
+        if self._running:
+            confirm = messagebox.askyesno(
+                'Operation in Progress',
+                'An operation is currently running.\n\n'
+                'If you close now, the process will be interrupted mid-way.\n\n'
+                'Close anyway?',
+                icon='warning'
+            )
+            if not confirm:
+                return
+        self.destroy()
 
     # ── Screen management ─────────────────────────────────────
     def _clear_screen(self):
@@ -236,11 +294,66 @@ class ShrinkifyApp(tk.Tk):
     def _build_main_ui(self):
         is_file_mode = (self._mode == 'file')
 
-        # ── Left panel ────────────────────────────────────────
+        # ── Left panel (scrollable) ───────────────────────────
         left_w = 310 if _IS_MACOS else 295
-        left = tk.Frame(self, bg=COLORS['surface'], width=left_w)
-        left.pack(side=tk.LEFT, fill=tk.Y)
-        left.pack_propagate(False)
+        left_outer = tk.Frame(self, bg=COLORS['surface'], width=left_w)
+        left_outer.pack(side=tk.LEFT, fill=tk.Y)
+        left_outer.pack_propagate(False)
+
+        _left_sb_style = ttk.Style()
+        _left_sb_style.configure('LeftPanel.Vertical.TScrollbar',
+                                 background=COLORS['border'],
+                                 troughcolor=COLORS['surface'],
+                                 arrowcolor=COLORS['text_muted'],
+                                 bordercolor=COLORS['surface'],
+                                 darkcolor=COLORS['surface'],
+                                 lightcolor=COLORS['surface'])
+        left_canvas = tk.Canvas(left_outer, bg=COLORS['surface'],
+                                highlightthickness=0, bd=0,
+                                width=left_w)
+        left_scrollbar = ttk.Scrollbar(left_outer, orient=tk.VERTICAL,
+                                       command=left_canvas.yview,
+                                       style='LeftPanel.Vertical.TScrollbar')
+        left_canvas.configure(yscrollcommand=left_scrollbar.set)
+        # Scrollbar only shown when needed (grid lets us hide it)
+        left_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        left = tk.Frame(left_canvas, bg=COLORS['surface'], width=left_w)
+        left_canvas_window = left_canvas.create_window(
+            (0, 0), window=left, anchor='nw')
+
+        def _on_left_frame_configure(event):
+            left_canvas.configure(scrollregion=left_canvas.bbox('all'))
+            # Show scrollbar only when content exceeds canvas height
+            if left.winfo_reqheight() > left_canvas.winfo_height():
+                left_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            else:
+                left_scrollbar.pack_forget()
+
+        def _on_left_canvas_configure(event):
+            left_canvas.itemconfig(left_canvas_window, width=event.width)
+            # Re-check if scrollbar is needed
+            if left.winfo_reqheight() > event.height:
+                left_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            else:
+                left_scrollbar.pack_forget()
+
+        left.bind('<Configure>', _on_left_frame_configure)
+        left_canvas.bind('<Configure>', _on_left_canvas_configure)
+
+        def _left_mousewheel(event):
+            if sys.platform == 'darwin':
+                left_canvas.yview_scroll(-1 * int(event.delta), 'units')
+            elif event.num == 4:
+                left_canvas.yview_scroll(-1, 'units')
+            elif event.num == 5:
+                left_canvas.yview_scroll(1, 'units')
+            else:
+                left_canvas.yview_scroll(-1 * int(event.delta / 120), 'units')
+
+        left_outer.bind_all('<MouseWheel>', _left_mousewheel)
+        left_outer.bind_all('<Button-4>', _left_mousewheel)
+        left_outer.bind_all('<Button-5>', _left_mousewheel)
 
         # Header with back button
         hdr = tk.Frame(left, bg=COLORS['surface'])
@@ -797,10 +910,26 @@ class ShrinkifyApp(tk.Tk):
 
     def _show_summary(self, summary):
         self._clear_summary()
+
+        # Count duplicate groups (files sharing the same hash)
+        dup_groups = 0
+        if self._media_files:
+            from collections import Counter
+            hash_counts = Counter(
+                mf.file_hash for mf in self._media_files
+                if getattr(mf, 'file_hash', None) and mf.is_duplicate
+            )
+            # Each hash that appears as a duplicate represents one group
+            dup_groups = len(hash_counts)
+
+        dup_sub = (f"{_fmt_size(summary.duplicate_size_bytes)}"
+                   f"  ·  {dup_groups} group{'s' if dup_groups != 1 else ''}"
+                   if dup_groups > 0 else _fmt_size(summary.duplicate_size_bytes))
+
         cards = [
             (f"{summary.total_files:,}", f"{_fmt_size(summary.total_size_bytes)}", 'Total Files', COLORS['blue']),
             (f"{summary.videos_to_convert + summary.images_to_convert:,}", 'conversion candidates', 'Convert', COLORS['accent2']),
-            (f"{summary.duplicate_count:,}", f"{_fmt_size(summary.duplicate_size_bytes)}", 'Duplicates', COLORS['red']),
+            (f"{summary.duplicate_count:,}", dup_sub, 'Duplicates', COLORS['red']),
             (f"−{_fmt_size(summary.total_potential_savings_bytes)}", f"{summary.savings_percentage:.1f}% reduction", 'Est. Savings', COLORS['green']),
         ]
         for val, sub, label, color in cards:
