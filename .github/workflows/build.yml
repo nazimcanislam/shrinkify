@@ -74,12 +74,11 @@ jobs:
             --hidden-import=PIL.Image \
             --collect-all pillow_heif \
             --add-data "icon.png:." \
-            --add-data "icon.ico:."
 
       - name: Zip the .app bundle
         run: |
           cd dist
-          zip -r Shrinkify-macOS.zip Shrinkify
+          zip -r Shrinkify-macOS.zip Shrinkify.app
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -148,7 +147,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          name: Shrinkify ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name || 'manual' }}
+          name: Shrinkify ${{ github.ref_name || 'Manual Build' }}
           body: |
             ## Shrinkify ${{ github.ref_name }}
 
