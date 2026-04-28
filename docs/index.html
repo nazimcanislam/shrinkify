@@ -880,10 +880,10 @@
 
             <ul class="ticker-files">
               <li class="ticker-file">
-                <span class="name">
+                <code class="name">
                   <span class="icon">🎬</span>
                   vacation_2022.mp4
-                </span>
+                </code>
                 <div>
                   <span class="size"><s>739 MB</s> → 90 MB</span>
                   <span class="savings">-88%</span>
@@ -891,10 +891,10 @@
               </li>
 
               <li class="ticker-file">
-                <span class="name">
+                <code class="name">
                   <span class="icon">📸</span>
                   IMG_0492.jpg
-                </span>
+                </code>
                 <div>
                   <span class="size"><s>8.4 MB</s> → 5.0 MB</span>
                   <span class="savings">-40%</span>
@@ -902,10 +902,10 @@
               </li>
 
               <li class="ticker-file">
-                <span class="name">
+                <code class="name">
                   <span class="icon">🎥</span>
                   birthday_party.mp4
-                </span>
+                </code>
                 <div>
                   <span class="size"><s>41 MB</s> → 16 MB</span>
                   <span class="savings">-61%</span>
@@ -1067,7 +1067,7 @@
                 <li class="file-row">
                   <span class="ficon" aria-hidden="true">🎬</span>
                   <div>
-                    <div class="fname">vacation_2022.mp4</div>
+                    <code class="fname">vacation_2022.mp4</code>
                     <div class="fmeta">739 MB · H.264 · 16 Mbps</div>
                   </div>
                 </li>
@@ -1075,7 +1075,7 @@
                 <li class="file-row">
                   <span class="ficon" aria-hidden="true">📸</span>
                   <div>
-                    <div class="fname">IMG_0042.jpg</div>
+                    <code class="fname">IMG_0042.jpg</code>
                     <div class="fmeta">8.4 MB · JPEG</div>
                   </div>
                 </li>
@@ -1083,7 +1083,7 @@
                 <li class="file-row">
                   <span class="ficon" aria-hidden="true">🎥</span>
                   <div>
-                    <div class="fname">birthday_party.mp4</div>
+                    <code class="fname">birthday_party.mp4</code>
                     <div class="fmeta">41 MB · H.264</div>
                   </div>
                 </li>
@@ -1091,7 +1091,7 @@
                 <li class="file-row">
                   <span class="ficon" aria-hidden="true">📸</span>
                   <div>
-                    <div class="fname">photo_2023.jpg</div>
+                    <code class="fname">photo_2023.jpg</code>
                     <div class="fmeta">5.2 MB · JPEG</div>
                   </div>
                 </li>
@@ -1105,7 +1105,7 @@
                 <li class="file-row">
                   <span class="ficon" aria-hidden="true">🎬</span>
                   <div>
-                    <div class="fname">vacation_2022.mp4</div>
+                    <code class="fname">vacation_2022.mp4</code>
                     <div class="fmeta">90 MB · H.265</div>
                   </div>
                   <span class="fsaving">-88%</span>
@@ -1114,7 +1114,7 @@
                 <li class="file-row">
                   <span class="ficon" aria-hidden="true">📸</span>
                   <div>
-                    <div class="fname">IMG_0042.heic</div>
+                    <code class="fname">IMG_0042.heic</code>
                     <div class="fmeta">5.0 MB · HEIF</div>
                   </div>
                   <span class="fsaving">-40%</span>
@@ -1123,7 +1123,7 @@
                 <li class="file-row">
                   <span class="ficon" aria-hidden="true">🎥</span>
                   <div>
-                    <div class="fname">birthday_party.mp4</div>
+                    <code class="fname">birthday_party.mp4</code>
                     <div class="fmeta">17 MB · H.265</div>
                   </div>
                   <span class="fsaving">-59%</span>
@@ -1132,7 +1132,7 @@
                 <li class="file-row">
                   <span class="ficon" aria-hidden="true">📸</span>
                   <div>
-                    <div class="fname">photo_2023.heic</div>
+                    <code class="fname">photo_2023.heic</code>
                     <div class="fmeta">3.1 MB · HEIF</div>
                   </div>
                   <span class="fsaving">-40%</span>
@@ -1378,7 +1378,7 @@
           </div>
           <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--muted)">
             If you share files with people on older devices, keep your
-            originals. Shrinkify never deletes them.
+            originals. Shrinkify <strong>never deletes them</strong>.
           </p>
         </section>
       </article>
@@ -1439,31 +1439,38 @@
     </footer>
 
     <script>
-      const userAgent = window.navigator.userAgent;
-      const platform =
-        window.navigator?.userAgentData?.platform || window.navigator.platform;
-      const macosPlatforms = ["Macintosh", "MacIntel", "MacPPC", "Mac68K"];
-      const windowsPlatforms = ["Win32", "Win64", "Windows", "WinCE"];
-      const iosPlatforms = ["iPhone", "iPad", "iPod"];
+      function getOS() {
+        const userAgent =
+          window.navigator.userAgent || window.navigator.vendor || window.opera;
+        const platform = window.navigator.platform || "unknown";
 
-      let os = "Unknown";
+        if (
+          /iPad|iPhone|iPod/.test(userAgent) ||
+          (platform === "MacIntel" && window.navigator.maxTouchPoints > 1)
+        ) {
+          return "iOS";
+        }
 
-      if (macosPlatforms.indexOf(platform) !== -1) {
-        os = "macOS";
-      } else if (iosPlatforms.indexOf(platform) !== -1) {
-        os = "iOS";
-      } else if (windowsPlatforms.indexOf(platform) !== -1) {
-        os = "Windows";
-      } else if (/Android/.test(userAgent)) {
-        os = "Android";
-      } else if (/Linux/.test(platform)) {
-        os = "Linux";
+        if (/Macintosh|MacIntel|MacPPC|Mac68K/.test(userAgent)) {
+          return "macOS";
+        }
+
+        if (/android/i.test(userAgent)) {
+          return "Android";
+        }
+
+        if (/Win32|Win64|Windows|WinCE/.test(userAgent)) {
+          return "Windows";
+        }
+
+        if (/Linux|X11/.test(userAgent)) {
+          return "Linux";
+        }
+
+        return "unknown";
       }
 
-      if (os === "macOS" && navigator.maxTouchPoints > 1) {
-        os = "iOS";
-      }
-
+      const os = getOS();
       const detectedOsClassName = "detected-os";
       if (os === "Windows") {
         document
