@@ -12,6 +12,8 @@ import webbrowser
 import subprocess
 from pathlib import Path
 
+from version import __version__
+
 # ── DPI awareness (Windows) ───────────────────────────────────
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(1)
@@ -186,7 +188,7 @@ class ModeScreen(tk.Frame):
 class ShrinkifyApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title('Shrinkify')
+        self.title(f'Shrinkify {__version__}')
         self.geometry('1080x800' if _IS_MACOS else '1060x780')
         self.minsize(860, 640)
         self.configure(bg=COLORS['bg'])

@@ -18,6 +18,7 @@ from core.scanner import scan_directory, compute_hashes, find_duplicates
 from core.analyzer import analyze_all
 from core.converter import convert_file, copy_unconverted, delete_duplicates
 from core.reporter import generate_html_report, print_summary, _fmt_size
+from version import __version__
 
 
 def _progress_bar(current: int, total: int, filename: str, width: int = 35) -> None:
@@ -61,6 +62,7 @@ Dry run:
     parser.add_argument('--hw-accel',         action='store_true', help='NVIDIA GPU acceleration (NVENC)')
     parser.add_argument('--report',           type=str, default='shrinkify_report.html')
     parser.add_argument('--no-report',        action='store_true')
+    parser.add_argument('--version', action='version', version=f'Shrinkify {__version__}')
 
     args = parser.parse_args()
     scan_dir = Path(args.directory)
