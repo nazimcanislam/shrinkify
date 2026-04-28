@@ -237,9 +237,13 @@
         color: var(--muted);
         margin-bottom: 0.75rem;
       }
+      .ticker-files {
+        list-style: none;
+      }
       .ticker-file {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 0.75rem;
         padding: 0.4rem 0;
         border-bottom: 1px solid var(--border);
@@ -252,7 +256,6 @@
       }
       .ticker-file .name {
         font-size: 0.85rem;
-        flex: 1;
       }
       .ticker-file .size {
         font-size: 0.8rem;
@@ -285,6 +288,7 @@
         border-bottom: 1px solid var(--border);
         background: var(--bg2);
         text-align: center;
+        list-style-type: none;
       }
       .stat-item .num {
         font-size: 2rem;
@@ -418,6 +422,9 @@
       .results-col.after-col h3 {
         color: var(--accent);
       }
+      .file-rows {
+        list-style: none;
+      }
       .file-row {
         background: var(--card-bg);
         border: 1px solid var(--border);
@@ -488,6 +495,7 @@
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         margin-bottom: 1.5rem;
         text-align: left;
+        list-style: none;
       }
       .dl-card {
         background: var(--card-bg);
@@ -796,9 +804,7 @@
         <div class="nav-links">
           <a href="#how">How it works</a>
           <a href="#guide">Guide</a>
-          <a
-            href="https://github.com/nazimcanislam/shrinkify"
-            target="_blank"
+          <a href="https://github.com/nazimcanislam/shrinkify" target="_blank"
             >GitHub</a
           >
           <a href="#download" class="nav-cta">↓ Download</a>
@@ -827,42 +833,70 @@
             >
           </div>
           <div class="demo-ticker">
-            <div class="label">Live example — 65 GB Takeout folder</div>
-            <div class="ticker-file">
-              <span class="icon">🎬</span
-              ><span class="name">vacation_2022.mp4</span
-              ><span class="size">739 MB</span><span class="savings">−88%</span>
-            </div>
-            <div class="ticker-file">
-              <span class="icon">📸</span><span class="name">IMG_0492.jpg</span
-              ><span class="size">8.4 MB</span><span class="savings">−40%</span>
-            </div>
-            <div class="ticker-file">
-              <span class="icon">🎥</span
-              ><span class="name">birthday_party.mp4</span
-              ><span class="size">1.2 GB</span><span class="savings">−59%</span>
-            </div>
-            <div class="ticker-total">
-              Total saved: <strong>−676 MB</strong>
-            </div>
+            <h2 class="label">Live Example</h2>
+
+            <ul class="ticker-files">
+              <li class="ticker-file">
+                <span class="name">
+                  <span class="icon">🎬</span>
+                  vacation_2022.mp4
+                </span>
+                <div>
+                  <span class="size"><s>739 MB</s> → 90 MB</span>
+                  <span class="savings">−88%</span>
+                </div>
+              </li>
+
+              <li class="ticker-file">
+                <span class="name">
+                  <span class="icon">📸</span>
+                  IMG_0492.jpg
+                </span>
+                <div>
+                  <span class="size"><s>8.4 MB</s> → 5.0 MB</span>
+                  <span class="savings">−40%</span>
+                </div>
+              </li>
+
+              <li class="ticker-file">
+                <span class="name">
+                  <span class="icon">🎥</span>
+                  birthday_party.mp4
+                </span>
+                <div>
+                  <span class="size"><s>1.2 GB</s> → 492 MB</span>
+                  <span class="savings">−59%</span>
+                </div>
+              </li>
+
+              <li class="ticker-file ticker-total">
+                <span class="name">
+                  Total compression without loss of quality
+                </span>
+                <div>
+                  <span class="size"><s>1.95 GB</s> → 1.36 GB</span>
+                  <span class="savings">-70%</span>
+                </div>
+              </li>
+            </ul>
           </div>
         </header>
 
         <!-- STATS -->
-        <div class="stats">
-          <div class="stat-item">
-            <span class="num">~60%</span
-            ><span class="desc">average reduction on H.264 video</span>
-          </div>
-          <div class="stat-item">
-            <span class="num">~40%</span
-            ><span class="desc">average reduction on JPEG photos</span>
-          </div>
-          <div class="stat-item">
-            <span class="num">3</span
-            ><span class="desc">platforms — Windows, macOS, Linux</span>
-          </div>
-        </div>
+        <ul class="stats">
+          <li class="stat-item">
+            <span class="num">~60%</span>
+            <span class="desc">average reduction on H.264 video</span>
+          </li>
+          <li class="stat-item">
+            <span class="num">~40%</span>
+            <span class="desc">average reduction on JPEG photos</span>
+          </li>
+          <li class="stat-item">
+            <span class="num">3</span>
+            <span class="desc">platforms — Windows, macOS, Linux</span>
+          </li>
+        </ul>
 
         <!-- HOW IT WORKS -->
         <section id="how">
@@ -979,75 +1013,92 @@
         <!-- REAL RESULTS -->
         <section id="results">
           <h2 class="section-label">Real results</h2>
+
           <h3>See the difference.</h3>
+
           <p>Actual results from a real Google Takeout export.</p>
+
           <div class="results-wrapper">
             <div class="results-col before-col">
               <h3>Before</h3>
-              <div class="file-row">
-                <span class="ficon">🎬</span>
-                <div>
-                  <div class="fname">vacation_2022.mp4</div>
-                  <div class="fmeta">739 MB · H.264 · 16 Mbps</div>
-                </div>
-              </div>
-              <div class="file-row">
-                <span class="ficon">📸</span>
-                <div>
-                  <div class="fname">IMG_0042.jpg</div>
-                  <div class="fmeta">8.4 MB · JPEG</div>
-                </div>
-              </div>
-              <div class="file-row">
-                <span class="ficon">🎥</span>
-                <div>
-                  <div class="fname">birthday_party.mp4</div>
-                  <div class="fmeta">41 MB · H.264</div>
-                </div>
-              </div>
-              <div class="file-row">
-                <span class="ficon">📸</span>
-                <div>
-                  <div class="fname">photo_2023.jpg</div>
-                  <div class="fmeta">5.2 MB · JPEG</div>
-                </div>
-              </div>
+
+              <ul class="file-rows">
+                <li class="file-row">
+                  <span class="ficon" aria-hidden="true">🎬</span>
+                  <div>
+                    <div class="fname">vacation_2022.mp4</div>
+                    <div class="fmeta">739 MB · H.264 · 16 Mbps</div>
+                  </div>
+                </li>
+
+                <li class="file-row">
+                  <span class="ficon" aria-hidden="true">📸</span>
+                  <div>
+                    <div class="fname">IMG_0042.jpg</div>
+                    <div class="fmeta">8.4 MB · JPEG</div>
+                  </div>
+                </li>
+
+                <li class="file-row">
+                  <span class="ficon" aria-hidden="true">🎥</span>
+                  <div>
+                    <div class="fname">birthday_party.mp4</div>
+                    <div class="fmeta">41 MB · H.264</div>
+                  </div>
+                </li>
+
+                <li class="file-row">
+                  <span class="ficon" aria-hidden="true">📸</span>
+                  <div>
+                    <div class="fname">photo_2023.jpg</div>
+                    <div class="fmeta">5.2 MB · JPEG</div>
+                  </div>
+                </li>
+              </ul>
             </div>
+
             <div class="results-col after-col">
-              <h3>After <span translate="no">Shrinkify</span></h3>
-              <div class="file-row">
-                <span class="ficon">🎬</span>
-                <div>
-                  <div class="fname">vacation_2022.mp4</div>
-                  <div class="fmeta">90 MB · H.265</div>
-                </div>
-                <span class="fsaving">−88%</span>
-              </div>
-              <div class="file-row">
-                <span class="ficon">📸</span>
-                <div>
-                  <div class="fname">IMG_0042.heic</div>
-                  <div class="fmeta">5.0 MB · HEIF</div>
-                </div>
-                <span class="fsaving">−40%</span>
-              </div>
-              <div class="file-row">
-                <span class="ficon">🎥</span>
-                <div>
-                  <div class="fname">birthday_party.mp4</div>
-                  <div class="fmeta">17 MB · H.265</div>
-                </div>
-                <span class="fsaving">−59%</span>
-              </div>
-              <div class="file-row">
-                <span class="ficon">📸</span>
-                <div>
-                  <div class="fname">photo_2023.heic</div>
-                  <div class="fmeta">3.1 MB · HEIF</div>
-                </div>
-                <span class="fsaving">−40%</span>
-              </div>
+              <h3>After Shrinkify</h3>
+
+              <ul class="file-rows">
+                <li class="file-row">
+                  <span class="ficon" aria-hidden="true">🎬</span>
+                  <div>
+                    <div class="fname">vacation_2022.mp4</div>
+                    <div class="fmeta">90 MB · H.265</div>
+                  </div>
+                  <span class="fsaving">−88%</span>
+                </li>
+
+                <li class="file-row">
+                  <span class="ficon" aria-hidden="true">📸</span>
+                  <div>
+                    <div class="fname">IMG_0042.heic</div>
+                    <div class="fmeta">5.0 MB · HEIF</div>
+                  </div>
+                  <span class="fsaving">−40%</span>
+                </li>
+
+                <li class="file-row">
+                  <span class="ficon" aria-hidden="true">🎥</span>
+                  <div>
+                    <div class="fname">birthday_party.mp4</div>
+                    <div class="fmeta">17 MB · H.265</div>
+                  </div>
+                  <span class="fsaving">−59%</span>
+                </li>
+
+                <li class="file-row">
+                  <span class="ficon" aria-hidden="true">📸</span>
+                  <div>
+                    <div class="fname">photo_2023.heic</div>
+                    <div class="fmeta">3.1 MB · HEIF</div>
+                  </div>
+                  <span class="fsaving">−40%</span>
+                </li>
+              </ul>
             </div>
+
             <div class="results-total">
               <span class="label">Total saved in this example</span>
               <span class="value">−676 MB</span>
@@ -1063,8 +1114,8 @@
             Download the right version for your operating system. All builds are
             produced automatically by GitHub Actions.
           </p>
-          <div class="dl-grid">
-            <div class="dl-card" id="dl-card-windows">
+          <ul class="dl-grid">
+            <li class="dl-card" id="dl-card-windows">
               <div>
                 <h3><span class="os-icon">🪟</span> Windows</h3>
                 <span class="dl-badge tested">Tested ✓</span>
@@ -1077,8 +1128,8 @@
                 href="https://github.com/nazimcanislam/shrinkify/releases/latest/download/Shrinkify.exe"
                 >↓ Download .exe</a
               >
-            </div>
-            <div class="dl-card" id="dl-card-macos">
+            </li>
+            <li class="dl-card" id="dl-card-macos">
               <div>
                 <h3>
                   <span class="os-icon">🍎</span>
@@ -1095,8 +1146,8 @@
                 href="https://github.com/nazimcanislam/shrinkify/releases/latest/download/Shrinkify-macOS.zip"
                 >↓ Download .zip</a
               >
-            </div>
-            <div class="dl-card" id="dl-card-linux">
+            </li>
+            <li class="dl-card" id="dl-card-linux">
               <div>
                 <h3>
                   <span class="os-icon">🐧</span>
@@ -1113,8 +1164,8 @@
                 href="https://github.com/nazimcanislam/shrinkify/releases/latest/download/Shrinkify"
                 >↓ Download binary</a
               >
-            </div>
-            <div class="dl-card future-card">
+            </li>
+            <li class="dl-card future-card">
               <div>
                 <h3>
                   <span class="os-icon" id="dl-card-phone">📱</span>
@@ -1127,8 +1178,8 @@
                 </p>
               </div>
               <span class="btn-dl-disabled">Not available yet</span>
-            </div>
-          </div>
+            </li>
+          </ul>
           <div class="dl-note">
             <strong>⚠ Requires ffmpeg</strong> — Shrinkify uses ffmpeg for video
             analysis and conversion. Install it from
@@ -1309,9 +1360,7 @@
           </p>
         </div>
         <div class="footer-links">
-          <a
-            href="https://github.com/nazimcanislam/shrinkify"
-            target="_blank"
+          <a href="https://github.com/nazimcanislam/shrinkify" target="_blank"
             >GitHub</a
           >
           <a
