@@ -83,12 +83,20 @@
       }
       html {
         scroll-behavior: smooth;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
       }
       body {
         font-family: "Segoe UI", system-ui, sans-serif;
         background: var(--bg);
         color: var(--text);
         line-height: 1.6;
+      }
+
+      a:focus-visible,
+      button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
       }
 
       /* NAV */
@@ -179,6 +187,7 @@
         font-style: normal;
         color: var(--accent);
         text-wrap: nowrap;
+        white-space: nowrap;
       }
       .hero p {
         color: var(--muted);
@@ -788,6 +797,41 @@
           display: none;
         }
       }
+
+      @media (max-width: 400px) {
+        .ticker-file {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.25rem;
+        }
+
+        .ticker-file > div {
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
+        }
+
+        .ticker-file .name {
+          display: flex;
+          gap: 0.4rem;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+
+        .ticker-file .size {
+          font-size: 0.75rem;
+        }
+
+        .ticker-file .savings {
+          font-size: 0.75rem;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
     </style>
   </head>
   <body>
@@ -814,7 +858,7 @@
     <main>
       <article>
         <!-- HERO -->
-        <header class="hero">
+        <header class="hero" data-reader="true">
           <div class="hero-badge">🆓 Free &amp; Open Source</div>
           <h1>Make your media library <em>breathe again.</em></h1>
           <p>
@@ -841,7 +885,7 @@
                   vacation_2022.mp4
                 </span>
                 <div>
-                  <span class="size">739 MB</span>
+                  <span class="size"><s>739 MB</s> → 90 MB</span>
                   <span class="savings">-88%</span>
                 </div>
               </li>
@@ -852,7 +896,7 @@
                   IMG_0492.jpg
                 </span>
                 <div>
-                  <span class="size">8.4 MB</span>
+                  <span class="size"><s>8.4 MB</s> → 5.0 MB</span>
                   <span class="savings">-40%</span>
                 </div>
               </li>
@@ -863,16 +907,16 @@
                   birthday_party.mp4
                 </span>
                 <div>
-                  <span class="size">41 MB</span>
-                  <span class="savings">-59%</span>
+                  <span class="size"><s>41 MB</s> → 16 MB</span>
+                  <span class="savings">-61%</span>
                 </div>
               </li>
 
               <li class="ticker-file ticker-total">
                 <span class="name">Total result</span>
                 <strong>
-                  <span class="size">1.36 GB</span>
-                  <span class="savings">-70%</span>
+                  <span class="size"><s>1.36 GB</s> → 110 MB</span>
+                  <span class="savings">-85%</span>
                 </strong>
               </li>
             </ul>
