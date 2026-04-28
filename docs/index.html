@@ -254,27 +254,26 @@
       .ticker-file .icon {
         font-size: 1.2rem;
       }
-      .ticker-file .name {
-        font-size: 0.85rem;
+      .ticker-file {
+        text-align: left;
+        font-size: clamp(0.75rem, 2.5vw, 0.85rem);
       }
       .ticker-file .size {
-        font-size: 0.8rem;
         color: var(--muted);
       }
       .ticker-file .savings {
-        font-size: 0.8rem;
         color: var(--green);
         font-weight: 600;
       }
       .ticker-total {
         margin-top: 0.75rem;
         text-align: right;
-        font-size: 0.85rem;
+        font-size: clamp(0.85rem, 2.5vw, 1rem) !important;
         color: var(--muted);
       }
       .ticker-total strong {
         color: var(--green);
-        font-size: 1rem;
+        font-size: clamp(0.85rem, 2.5vw, 1rem) !important;
       }
 
       /* STATS */
@@ -842,7 +841,7 @@
                   vacation_2022.mp4
                 </span>
                 <div>
-                  <span class="size"><s>739 MB</s> → 90 MB</span>
+                  <span class="size">90 MB</span>
                   <span class="savings">-88%</span>
                 </div>
               </li>
@@ -853,7 +852,7 @@
                   IMG_0492.jpg
                 </span>
                 <div>
-                  <span class="size"><s>8.4 MB</s> → 5.0 MB</span>
+                  <span class="size">5.0 MB</span>
                   <span class="savings">-40%</span>
                 </div>
               </li>
@@ -864,19 +863,17 @@
                   birthday_party.mp4
                 </span>
                 <div>
-                  <span class="size"><s>1.2 GB</s> → 492 MB</span>
+                  <span class="size">492 MB</span>
                   <span class="savings">-59%</span>
                 </div>
               </li>
 
               <li class="ticker-file ticker-total">
-                <span class="name">
-                  Total compression without loss of quality
-                </span>
-                <div>
-                  <span class="size"><s>1.95 GB</s> → 1.36 GB</span>
+                <span class="name">Total result</span>
+                <strong>
+                  <span class="size">1.36 GB</span>
                   <span class="savings">-70%</span>
-                </div>
+                </strong>
               </li>
             </ul>
           </div>
