@@ -97,6 +97,8 @@ ffprobe -version
 2. Extract it and add the `bin` folder to your system PATH
 3. Verify: open a terminal and run `ffprobe -version`
 
+> ⚠️ Windows: If `ffmpeg` is not found, try running **Shrinkify** *as Administrator* (right-click → "Run as administrator"). This is required when `ffmpeg` is installed system-wide but PATH is not available to the current user session.
+
 **macOS**
 
 ```bash

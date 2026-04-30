@@ -97,6 +97,8 @@ ffprobe -version
 2. Zipten çıkarın ve `bin` klasörünü sistem PATH'inize ekleyin
 3. Doğrulama: terminal açın ve `ffprobe -version` komutunu çalıştırın
 
+> ⚠️ Windows: Eğer `ffmpeg` bulunamazsa, **Shrinkify**'ı *Yönetici olarak* çalıştırmayı deneyin (sağ tıklayın → "Yönetici olarak çalıştır"). Bu, `ffmpeg` sistem genelinde yüklü olduğunda ancak PATH mevcut kullanıcı oturumunda kullanılamadığında gereklidir.
+
 **macOS**
 
 ```bash
