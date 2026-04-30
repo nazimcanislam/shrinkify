@@ -183,7 +183,8 @@ jobs:
 
             | Platform | File |
             |---|---|
-            | Windows | `Shrinkify.exe` |
+            | Windows (portable) | `Shrinkify.exe` |
+            | Windows (installer) | `Shrinkify-Setup.exe` |
             | macOS | `Shrinkify-macOS.zip` |
             | Linux | `Shrinkify` |
 
@@ -192,6 +193,7 @@ jobs:
             Built with Python + ffmpeg + pillow-heif.
           files: |
             artifacts/Shrinkify-Windows/Shrinkify.exe
+            artifacts/Shrinkify-Setup/Shrinkify-Setup.exe
             artifacts/Shrinkify-macOS/Shrinkify-macOS.zip
             artifacts/Shrinkify-Linux/Shrinkify
           draft: false
