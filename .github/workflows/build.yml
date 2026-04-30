@@ -44,6 +44,19 @@ jobs:
           name: Shrinkify-Windows
           path: dist/Shrinkify.exe
 
+      - name: Build installer (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          choco install innosetup -y
+          iscc shrinkify.iss
+
+      - name: Upload installer
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Shrinkify-Setup
+          path: Output/Shrinkify-Setup.exe
+
   # ── macOS ─────────────────────────────────────────────────────
   build-macos:
     name: Build — macOS
