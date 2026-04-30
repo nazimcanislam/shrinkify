@@ -9,7 +9,7 @@ SolidCompression=yes
 
 [Files]
 Source: "dist\Shrinkify.exe"; DestDir: "{app}"
-Source: "icon.ico"; DestDir: "{app}"
+Source: "assets\icon.ico"; DestDir: "{app}"
 
 [Icons]
 Name: "{group}\Shrinkify"; Filename: "{app}\Shrinkify.exe"
