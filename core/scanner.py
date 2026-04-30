@@ -61,9 +61,20 @@ def _find_binary(name: str) -> str:
     # 5. Common macOS Homebrew paths
     if sys.platform == 'darwin':
         mac_paths = [
-            Path('/usr/local/bin') / name,          # Intel Homebrew
-            Path('/opt/homebrew/bin') / name,        # Apple Silicon Homebrew
+            Path('/opt/homebrew/bin') / name,                       # Apple Silicon
+            Path('/usr/local/bin') / name,                          # Intel Mac
+            Path('/usr/bin') / name,                                # System (rare but possible if user installed via brew and symlinked)
+            Path(os.path.expanduser('~')) / 'homebrew/bin' / name,  # User's homebrew (if installed without sudo)
         ]
+
+        # Also try a PATH lookup with common directories appended,
+        # since on macOS the PATH can be very inconsistent depending
+        # on how the app is launched (Terminal vs Finder vs PyInstaller).
+        extra_env_path = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+        found = shutil.which(name, path=extra_env_path)
+        if found:
+            return found
+
         for p in mac_paths:
             if p.exists():
                 return str(p)
