@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="icon.png" width="96" alt="Shrinkify icon" />
+  <img src="assets/icon.png" width="96" alt="Shrinkify icon" />
   <h1>Shrinkify</h1>
   <p>Analyze media files, suggest codec conversions, detect duplicates, and generate a detailed HTML report.</p>
 

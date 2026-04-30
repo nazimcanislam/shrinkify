@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="icon.png" width="96" alt="Shrinkify ikonu" />
+  <img src="assets/icon.png" width="96" alt="Shrinkify ikonu" />
   <h1>Shrinkify</h1>
   <p>Medya dosyalarını analiz et, codec dönüşümü öner, kopyaları tespit et ve ayrıntılı bir HTML raporu oluştur.</p>
 
