@@ -1,9 +1,11 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" id="html-root">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Shrinkify — Make Your Media Library Breathe Again</title>
+    <title data-i18n-title="page_title">
+      Shrinkify — Make Your Media Library Breathe Again
+    </title>
     <link
       rel="icon"
       type="image/png"
@@ -792,6 +794,23 @@
         text-decoration: underline;
       }
 
+      .lang-switcher {
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        color: var(--muted);
+        padding: 0.3rem 0.65rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.82rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        font-family: inherit;
+      }
+      .lang-switcher:hover {
+        border-color: var(--accent);
+        color: var(--text);
+      }
+
       @media (max-width: 640px) {
         .nav-links a:not(.nav-cta) {
           display: none;
@@ -845,12 +864,17 @@
           <span translate="no">Shrinkify</span>
         </a>
         <div class="nav-links">
-          <a href="#how">How it works</a>
-          <a href="#guide">Guide</a>
+          <a href="#how" data-i18n="nav_how">How it works</a>
+          <a href="#guide" data-i18n="nav_guide">Guide</a>
           <a href="https://github.com/nazimcanislam/shrinkify" target="_blank"
             >GitHub</a
           >
-          <a href="#download" class="nav-cta">↓ Download</a>
+          <button class="lang-switcher" id="lang-btn" onclick="toggleLang()">
+            🇹🇷 TR
+          </button>
+          <a href="#download" class="nav-cta" data-i18n="nav_download"
+            >↓ Download</a
+          >
         </div>
       </div>
     </nav>
@@ -859,24 +883,34 @@
       <article>
         <!-- HERO -->
         <header class="hero" data-reader="true">
-          <div class="hero-badge">🆓 Free &amp; Open Source</div>
-          <h1>Make your media library <em>breathe again.</em></h1>
-          <p>
+          <div class="hero-badge">
+            🆓 <span data-i18n="hero_badge">Free &amp; Open Source</span>
+          </div>
+          <h1 data-i18n="hero_h1">
+            Make your media library <em>breathe again.</em>
+          </h1>
+          <p data-i18n="hero_p">
             Shrinkify converts old H.264 videos and JPEG photos to modern H.265
             and HEIF formats — cutting your library size by up to 60% without
             losing a single pixel of quality.
           </p>
           <div class="hero-btns">
-            <a href="#download" class="btn btn-primary">↓ Download free</a>
+            <a
+              href="#download"
+              class="btn btn-primary"
+              data-i18n="hero_btn_download"
+              >↓ Download free</a
+            >
             <a
               href="https://github.com/nazimcanislam/shrinkify"
               target="_blank"
               class="btn btn-secondary"
+              data-i18n="hero_btn_github"
               >View on GitHub</a
             >
           </div>
           <div class="demo-ticker">
-            <h2 class="label">Live Example</h2>
+            <h2 class="label" data-i18n="ticker_label">Live Example</h2>
 
             <ul class="ticker-files">
               <li class="ticker-file">
@@ -913,7 +947,7 @@
               </li>
 
               <li class="ticker-file ticker-total">
-                <span class="name">Total result</span>
+                <span class="name" data-i18n="ticker_total">Total result</span>
                 <strong>
                   <span class="size"><s>1.36 GB</s> → 110 MB</span>
                   <span class="savings">-85%</span>
@@ -927,51 +961,63 @@
         <ul class="stats">
           <li class="stat-item">
             <span class="num">~60%</span>
-            <span class="desc">average reduction on H.264 video</span>
+            <span class="desc" data-i18n="stat_video"
+              >average reduction on H.264 video</span
+            >
           </li>
           <li class="stat-item">
             <span class="num">~40%</span>
-            <span class="desc">average reduction on JPEG photos</span>
+            <span class="desc" data-i18n="stat_photo"
+              >average reduction on JPEG photos</span
+            >
           </li>
           <li class="stat-item">
             <span class="num">3</span>
-            <span class="desc">platforms — Windows, macOS, Linux</span>
+            <span class="desc" data-i18n="stat_platforms"
+              >platforms — Windows, macOS, Linux</span
+            >
           </li>
         </ul>
 
         <!-- HOW IT WORKS -->
         <section id="how">
-          <h2 class="section-label">How it works</h2>
-          <h3>Three steps. Zero quality loss.</h3>
+          <h2 class="section-label" data-i18n="how_label">How it works</h2>
+          <h3 data-i18n="how_h3">Three steps. Zero quality loss.</h3>
           <p>
-            <span translate="no">Shrinkify</span> does the technical heavy
-            lifting so you don't have to know what H.265 means.
+            <span translate="no">Shrinkify</span>
+            <span data-i18n="how_p"
+              >does the technical heavy lifting so you don't have to know what
+              H.265 means.</span
+            >
           </p>
           <ul class="steps">
             <li class="step-card">
-              <span class="step-num">01 — SELECT</span>
+              <span class="step-num" data-i18n="step1_num">01 — SELECT</span>
               <span class="step-icon">📂</span>
-              <h3>Point it at a folder</h3>
-              <p>
+              <h3 data-i18n="step1_h3">Point it at a folder</h3>
+              <p data-i18n="step1_p">
                 Drop in your Google Takeout export, camera roll backup, or any
                 folder full of photos and videos.
               </p>
             </li>
             <li class="step-card">
-              <span class="step-num">02 — ANALYZE</span>
+              <span class="step-num" data-i18n="step2_num">02 — ANALYZE</span>
               <span class="step-icon">🔍</span>
-              <h3>Let it scan</h3>
+              <h3 data-i18n="step2_h3">Let it scan</h3>
               <p>
-                <span translate="no">Shrinkify</span> reads every file's codec,
-                bitrate, and format. Finds duplicates. Shows a detailed savings
-                report before touching anything.
+                <span translate="no">Shrinkify</span>
+                <span data-i18n="step2_p"
+                  >reads every file's codec, bitrate, and format. Finds
+                  duplicates. Shows a detailed savings report before touching
+                  anything.</span
+                >
               </p>
             </li>
             <li class="step-card">
-              <span class="step-num">03 — SHRINK</span>
+              <span class="step-num" data-i18n="step3_num">03 — SHRINK</span>
               <span class="step-icon">✨</span>
-              <h3>One click to convert</h3>
-              <p>
+              <h3 data-i18n="step3_h3">One click to convert</h3>
+              <p data-i18n="step3_p">
                 Converted files land in a <code>shrinkified/</code> folder.
                 Originals are untouched. If a conversion makes a file bigger,
                 it's discarded.
@@ -980,58 +1026,73 @@
           </ul>
         </section>
 
-        <!-- FEATURES -->
         <section id="features">
-          <h2 class="section-label">Features</h2>
-          <h3>Everything your media library needs.</h3>
-          <p>Built for everyday people and power users alike.</p>
+          <h2 class="section-label" data-i18n="feat_label">Features</h2>
+          <h3 data-i18n="feat_h3">Everything your media library needs.</h3>
+          <p data-i18n="feat_p">
+            Built for everyday people and power users alike.
+          </p>
           <ul class="features-grid">
             <li class="feature-card">
               <h3>
-                <span class="feat-icon">🎬</span> H.264 → H.265 video conversion
+                <span class="feat-icon">🎬</span>
+                <span data-i18n="feat1_h3">H.264 → H.265 video conversion</span>
               </h3>
-              <p>
+              <p data-i18n="feat1_p">
                 Re-encodes old MP4, MOV, AVI, and MKV files to HEVC — the same
                 quality, half the size. Uses your GPU automatically on Apple
                 Silicon, NVIDIA, Intel, and AMD hardware.
               </p>
-              <span class="badge">Up to 60% smaller</span>
+              <span class="badge" data-i18n="feat1_badge"
+                >Up to 60% smaller</span
+              >
             </li>
             <li class="feature-card">
               <h3>
-                <span class="feat-icon">📸</span> JPEG & PNG → HEIF conversion
+                <span class="feat-icon">📸</span>
+                <span data-i18n="feat2_h3">JPEG & PNG → HEIF conversion</span>
               </h3>
-              <p>
+              <p data-i18n="feat2_p">
                 Converts photos to the modern HEIF format, the same format
                 iPhones and recent Androids shoot in natively. EXIF metadata,
                 GPS location, and date are fully preserved.
               </p>
-              <span class="badge">Up to 40% smaller</span>
+              <span class="badge" data-i18n="feat2_badge"
+                >Up to 40% smaller</span
+              >
             </li>
             <li class="feature-card">
               <h3>
-                <span class="feat-icon">🔁</span> Duplicate file detection
+                <span class="feat-icon">🔁</span>
+                <span data-i18n="feat3_h3">Duplicate file detection</span>
               </h3>
-              <p>
+              <p data-i18n="feat3_p">
                 Finds files that are identical regardless of filename using fast
                 file hashing. Shows you exactly which files are duplicates and
                 lets you delete them safely.
               </p>
             </li>
             <li class="feature-card">
-              <h3><span class="feat-icon">📊</span> Beautiful HTML report</h3>
+              <h3>
+                <span class="feat-icon">📊</span>
+                <span data-i18n="feat4_h3">Beautiful HTML report</span>
+              </h3>
               <p>
-                After every scan,
-                <span translate="no">Shrinkify</span> generates a detailed
-                report showing codec distribution, estimated savings breakdown,
-                and a list of every file — organized into categories.
+                <span data-i18n="feat4_p_pre">After every scan,</span>
+                <span translate="no">Shrinkify</span>
+                <span data-i18n="feat4_p_post"
+                  >generates a detailed report showing codec distribution,
+                  estimated savings breakdown, and a list of every file —
+                  organized into categories.</span
+                >
               </p>
             </li>
             <li class="feature-card">
               <h3>
-                <span class="feat-icon">🗂️</span> Folder structure preserved
+                <span class="feat-icon">🗂️</span>
+                <span data-i18n="feat5_h3">Folder structure preserved</span>
               </h3>
-              <p>
+              <p data-i18n="feat5_p">
                 Enable "Preserve folder structure" and your subfolder hierarchy
                 is mirrored inside the output folder. Your album organization
                 stays intact.
@@ -1039,9 +1100,10 @@
             </li>
             <li class="feature-card">
               <h3>
-                <span class="feat-icon">🛡️</span> Originals are never touched
+                <span class="feat-icon">🛡️</span>
+                <span data-i18n="feat6_h3">Originals are never touched</span>
               </h3>
-              <p>
+              <p data-i18n="feat6_p">
                 Every converted file goes into a
                 <code>shrinkified/</code> subfolder. Your source files are
                 read-only. Dry run mode lets you preview results before
@@ -1053,15 +1115,14 @@
 
         <!-- REAL RESULTS -->
         <section id="results">
-          <h2 class="section-label">Real results</h2>
-
-          <h3>See the difference.</h3>
-
-          <p>Actual results from a real Google Takeout export.</p>
-
+          <h2 class="section-label" data-i18n="results_label">Real results</h2>
+          <h3 data-i18n="results_h3">See the difference.</h3>
+          <p data-i18n="results_p">
+            Actual results from a real Google Takeout export.
+          </p>
           <div class="results-wrapper">
             <div class="results-col before-col">
-              <h3>Before</h3>
+              <h3 data-i18n="results_before">Before</h3>
 
               <ul class="file-rows">
                 <li class="file-row">
@@ -1099,7 +1160,7 @@
             </div>
 
             <div class="results-col after-col">
-              <h3>After Shrinkify</h3>
+              <h3 data-i18n="results_after">After Shrinkify</h3>
 
               <ul class="file-rows">
                 <li class="file-row">
@@ -1141,7 +1202,9 @@
             </div>
 
             <div class="results-total">
-              <span class="label">Total saved in this example</span>
+              <span class="label" data-i18n="results_total_label"
+                >Total saved in this example</span
+              >
               <span class="value">-676 MB</span>
             </div>
           </div>
@@ -1149,9 +1212,9 @@
 
         <!-- DOWNLOAD -->
         <section id="download">
-          <h2 class="section-label">Download</h2>
-          <h3>Free on every platform.</h3>
-          <p>
+          <h2 class="section-label" data-i18n="dl_label">Download</h2>
+          <h3 data-i18n="dl_h3">Free on every platform.</h3>
+          <p data-i18n="dl_p">
             Download the right version for your operating system. All builds are
             produced automatically by GitHub Actions.
           </p>
@@ -1159,14 +1222,17 @@
             <li class="dl-card" id="dl-card-windows">
               <div>
                 <h3><span class="os-icon">🪟</span> Windows</h3>
-                <span class="dl-badge tested">Tested ✓</span>
-                <p>
+                <span class="dl-badge tested" data-i18n="dl_badge_tested"
+                  >Tested ✓</span
+                >
+                <p data-i18n="dl_win_p">
                   Windows 10 or later. Installer-free — just download and run.
                 </p>
               </div>
               <a
                 class="btn-dl"
                 href="https://github.com/nazimcanislam/shrinkify/releases/latest/download/Shrinkify.exe"
+                data-i18n="dl_win_btn"
                 >↓ Download .exe</a
               >
             </li>
@@ -1176,8 +1242,10 @@
                   <span class="os-icon">🍎</span>
                   macOS
                 </h3>
-                <span class="dl-badge tested">Tested ✓</span>
-                <p>
+                <span class="dl-badge tested" data-i18n="dl_badge_tested"
+                  >Tested ✓</span
+                >
+                <p data-i18n="dl_mac_p">
                   macOS 12 or later. Apple Silicon native. GPU acceleration via
                   VideoToolbox.
                 </p>
@@ -1185,6 +1253,7 @@
               <a
                 class="btn-dl"
                 href="https://github.com/nazimcanislam/shrinkify/releases/latest/download/Shrinkify-macOS.zip"
+                data-i18n="dl_mac_btn"
                 >↓ Download .zip</a
               >
             </li>
@@ -1194,8 +1263,10 @@
                   <span class="os-icon">🐧</span>
                   Linux
                 </h3>
-                <span class="dl-badge tested">Tested ✓</span>
-                <p>
+                <span class="dl-badge tested" data-i18n="dl_badge_tested"
+                  >Tested ✓</span
+                >
+                <p data-i18n="dl_linux_p">
                   Ubuntu 22.04+. Run the binary directly. May require
                   <code>chmod +x Shrinkify</code>.
                 </p>
@@ -1203,6 +1274,7 @@
               <a
                 class="btn-dl"
                 href="https://github.com/nazimcanislam/shrinkify/releases/latest/download/Shrinkify"
+                data-i18n="dl_linux_btn"
                 >↓ Download binary</a
               >
             </li>
@@ -1212,16 +1284,20 @@
                   <span class="os-icon" id="dl-card-phone">📱</span>
                   Mobile
                 </h3>
-                <span class="dl-badge future">Possible future release</span>
-                <p>
+                <span class="dl-badge future" data-i18n="dl_mobile_badge"
+                  >Possible future release</span
+                >
+                <p data-i18n="dl_mobile_p">
                   Mobile support is not currently available. We may explore iOS
                   and Android builds in a future release as the project matures.
                 </p>
               </div>
-              <span class="btn-dl-disabled">Not available yet</span>
+              <span class="btn-dl-disabled" data-i18n="dl_mobile_btn"
+                >Not available yet</span
+              >
             </li>
           </ul>
-          <div class="dl-note">
+          <div class="dl-note" data-i18n="dl_note">
             <strong>⚠ Requires ffmpeg</strong> — Shrinkify uses ffmpeg for video
             analysis and conversion. Install it from
             <a href="https://ffmpeg.org/download.html" target="_blank"
@@ -1235,19 +1311,32 @@
 
         <!-- GUIDE -->
         <section id="guide">
-          <h2 class="section-label">Quick start guide</h2>
-          <h3>Up and running in minutes.</h3>
-          <p>
+          <h2 class="section-label" data-i18n="guide_label">
+            Quick start guide
+          </h2>
+          <h3 data-i18n="guide_h3">Up and running in minutes.</h3>
+          <p data-i18n="guide_p">
             Scan according to your requirements.
-            <strong>Folder Mode</strong> allows for batch processing of entire
-            directories, while <strong>Single File Mode</strong> handles
-            individual files.
+            <strong data-i18n="guide_folder_mode">Folder Mode</strong> allows
+            for batch processing of entire directories, while
+            <strong data-i18n="guide_single_mode">Single File Mode</strong>
+            handles individual files.
           </p>
           <div class="guide-tabs">
-            <button class="tab-btn active" data-tab="folder" aria-hidden="true">
+            <button
+              class="tab-btn active"
+              data-tab="folder"
+              aria-hidden="true"
+              data-i18n="guide_tab_folder"
+            >
               🗂️ Folder Mode
             </button>
-            <button class="tab-btn" data-tab="single" aria-hidden="true">
+            <button
+              class="tab-btn"
+              data-tab="single"
+              aria-hidden="true"
+              data-i18n="guide_tab_single"
+            >
               📄 Single File Mode
             </button>
           </div>
@@ -1256,8 +1345,10 @@
               <li class="guide-step">
                 <div class="num" aria-hidden="true">1</div>
                 <div>
-                  <h3>Open Shrinkify and choose "Folder"</h3>
-                  <p>
+                  <h3 data-i18n="guide_f1_h3">
+                    Open Shrinkify and choose "Folder"
+                  </h3>
+                  <p data-i18n="guide_f1_p">
                     The welcome screen lets you choose between a single file or
                     an entire folder.
                   </p>
@@ -1266,8 +1357,10 @@
               <li class="guide-step">
                 <div class="num" aria-hidden="true">2</div>
                 <div>
-                  <h3>Select your folder and click Analyze</h3>
-                  <p>
+                  <h3 data-i18n="guide_f2_h3">
+                    Select your folder and click Analyze
+                  </h3>
+                  <p data-i18n="guide_f2_p">
                     Shrinkify scans every file, finds duplicates, and shows an
                     estimated savings report.
                   </p>
@@ -1276,8 +1369,8 @@
               <li class="guide-step">
                 <div class="num" aria-hidden="true">3</div>
                 <div>
-                  <h3>Try Dry Run first</h3>
-                  <p>
+                  <h3 data-i18n="guide_f3_h3">Try Dry Run first</h3>
+                  <p data-i18n="guide_f3_p">
                     Check "Dry run" to preview what would happen without
                     touching any files.
                   </p>
@@ -1286,8 +1379,8 @@
               <li class="guide-step">
                 <div class="num" aria-hidden="true">4</div>
                 <div>
-                  <h3>Click Convert Files</h3>
-                  <p>
+                  <h3 data-i18n="guide_f4_h3">Click Convert Files</h3>
+                  <p data-i18n="guide_f4_p">
                     Converted files appear in a
                     <code>shrinkified/</code> subfolder. Originals untouched.
                   </p>
@@ -1300,8 +1393,10 @@
               <li class="guide-step">
                 <div class="num" aria-hidden="true">1</div>
                 <div>
-                  <h3>Open Shrinkify and choose "Single File"</h3>
-                  <p>
+                  <h3 data-i18n="guide_s1_h3">
+                    Open Shrinkify and choose "Single File"
+                  </h3>
+                  <p data-i18n="guide_s1_p">
                     Perfect for converting one video or photo without scanning a
                     whole folder.
                   </p>
@@ -1310,8 +1405,8 @@
               <li class="guide-step">
                 <div class="num" aria-hidden="true">2</div>
                 <div>
-                  <h3>Browse to your file</h3>
-                  <p>
+                  <h3 data-i18n="guide_s2_h3">Browse to your file</h3>
+                  <p data-i18n="guide_s2_p">
                     Supports MP4, MOV, AVI, MKV, JPG, PNG, HEIC, WEBP, and more.
                   </p>
                 </div>
@@ -1319,8 +1414,8 @@
               <li class="guide-step">
                 <div class="num" aria-hidden="true">3</div>
                 <div>
-                  <h3>Choose a quality preset</h3>
-                  <p>
+                  <h3 data-i18n="guide_s3_h3">Choose a quality preset</h3>
+                  <p data-i18n="guide_s3_p">
                     Balanced is the recommended default. Maximum Shrink gives
                     the smallest file. Conservative is safest for archival.
                   </p>
@@ -1329,8 +1424,8 @@
               <li class="guide-step">
                 <div class="num" aria-hidden="true">4</div>
                 <div>
-                  <h3>Analyze then Convert</h3>
-                  <p>
+                  <h3 data-i18n="guide_s4_h3">Analyze then Convert</h3>
+                  <p data-i18n="guide_s4_p">
                     The converted file lands next to the original in a
                     <code>shrinkified/</code> folder.
                   </p>
@@ -1342,41 +1437,57 @@
 
         <!-- COMPAT -->
         <section id="compat">
-          <h2 class="section-label">Compatibility</h2>
-          <h3>Will the converted files open on my devices?</h3>
-          <p>
+          <h2 class="section-label" data-i18n="compat_label">Compatibility</h2>
+          <h3 data-i18n="compat_h3">
+            Will the converted files open on my devices?
+          </h3>
+          <p data-i18n="compat_p">
             H.265 and HEIF are modern standards supported on all devices
-            <strong>from roughly 2018</strong> onwards. Here's a quick reference
-            before you convert your whole library.
+            <strong data-i18n="compat_p_strong">from roughly 2018</strong>
+            onwards. Here's a quick reference before you convert your whole
+            library.
           </p>
           <div class="compat-grid">
             <div class="compat-card">
-              <h4>✅ Well supported</h4>
+              <h4 data-i18n="compat_good_h4">✅ Well supported</h4>
               <ul>
-                <li>
+                <li data-i18n="compat_good_1">
                   Windows 10 / 11
-                  <span style="color: var(--muted)"
+                  <span
+                    style="color: var(--muted)"
+                    data-i18n="compat_good_1_note"
                     >(free HEVC extension from Microsoft Store)</span
                   >
                 </li>
-                <li>macOS High Sierra (10.13) and later</li>
-                <li>iPhone / iPad — iOS 11 and later</li>
-                <li>Android 9 and later</li>
-                <li>Smart TVs from 2018 onwards</li>
-                <li>VLC on any platform</li>
+                <li data-i18n="compat_good_2">
+                  macOS High Sierra (10.13) and later
+                </li>
+                <li data-i18n="compat_good_3">
+                  iPhone / iPad — iOS 11 and later
+                </li>
+                <li data-i18n="compat_good_4">Android 9 and later</li>
+                <li data-i18n="compat_good_5">Smart TVs from 2018 onwards</li>
+                <li data-i18n="compat_good_6">VLC on any platform</li>
               </ul>
             </div>
             <div class="compat-card">
-              <h4>⚠️ May have issues</h4>
+              <h4 data-i18n="compat_bad_h4">⚠️ May have issues</h4>
               <ul>
-                <li>Windows 7 / 8 — no native H.265 or HEIF support</li>
-                <li>Android 8 and older — inconsistent hardware support</li>
-                <li>Smart TVs older than 2018</li>
-                <li>Old digital photo frames</li>
+                <li data-i18n="compat_bad_1">
+                  Windows 7 / 8 — no native H.265 or HEIF support
+                </li>
+                <li data-i18n="compat_bad_2">
+                  Android 8 and older — inconsistent hardware support
+                </li>
+                <li data-i18n="compat_bad_3">Smart TVs older than 2018</li>
+                <li data-i18n="compat_bad_4">Old digital photo frames</li>
               </ul>
             </div>
           </div>
-          <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--muted)">
+          <p
+            style="margin-top: 1rem; font-size: 0.85rem; color: var(--muted)"
+            data-i18n="compat_footer"
+          >
             If you share files with people on older devices, keep your
             originals. Shrinkify <strong>never deletes them</strong>.
           </p>
@@ -1395,23 +1506,28 @@
             />
             <span translate="no">Shrinkify</span>
           </div>
-          <p class="footer-desc">
+          <p class="footer-desc" data-i18n="footer_desc">
             Analyze media files, suggest codec conversions, detect duplicates,
             and generate a detailed HTML report. Free and open source, forever.
           </p>
         </div>
         <div class="footer-links">
-          <a href="https://github.com/nazimcanislam/shrinkify" target="_blank"
+          <a
+            href="https://github.com/nazimcanislam/shrinkify"
+            target="_blank"
+            data-i18n="footer_github"
             >GitHub</a
           >
           <a
             href="https://github.com/nazimcanislam/shrinkify/releases"
             target="_blank"
+            data-i18n="footer_releases"
             >Releases</a
           >
           <a
             href="https://github.com/nazimcanislam/shrinkify/issues"
             target="_blank"
+            data-i18n="footer_bug"
             >Report a bug</a
           >
           <a
@@ -1423,13 +1539,13 @@
       </div>
       <div class="footer-bottom">
         <div class="footer-bottom-content">
-          <span
+          <span data-i18n="footer_made_by"
             >Made by
             <a href="https://github.com/nazimcanislam" target="_blank"
               >Nazımcan İslam</a
             ></span
           >
-          <span class="collab-badge"
+          <span class="collab-badge" data-i18n="footer_collab"
             >🤝 Built in collaboration with
             <a href="https://claude.ai" target="_blank">Claude</a>
             (Anthropic)</span
@@ -1439,6 +1555,339 @@
     </footer>
 
     <script>
+      // ── i18n ──────────────────────────────────────────────────────────────
+      const translations = {
+        en: {
+          page_title: "Shrinkify — Make Your Media Library Breathe Again",
+          nav_how: "How it works",
+          nav_guide: "Guide",
+          nav_download: "↓ Download",
+          hero_badge: "Free & Open Source",
+          hero_h1: "Make your media library <em>breathe again.</em>",
+          hero_p:
+            "Shrinkify converts old H.264 videos and JPEG photos to modern H.265 and HEIF formats — cutting your library size by up to 60% without losing a single pixel of quality.",
+          hero_btn_download: "↓ Download free",
+          hero_btn_github: "View on GitHub",
+          ticker_label: "Live Example",
+          ticker_total: "Total result",
+          stat_video: "average reduction on H.264 video",
+          stat_photo: "average reduction on JPEG photos",
+          stat_platforms: "platforms — Windows, macOS, Linux",
+          how_label: "How it works",
+          how_h3: "Three steps. Zero quality loss.",
+          how_p:
+            "does the technical heavy lifting so you don't have to know what H.265 means.",
+          step1_num: "01 — SELECT",
+          step1_h3: "Point it at a folder",
+          step1_p:
+            "Drop in your Google Takeout export, camera roll backup, or any folder full of photos and videos.",
+          step2_num: "02 — ANALYZE",
+          step2_h3: "Let it scan",
+          step2_p:
+            "reads every file's codec, bitrate, and format. Finds duplicates. Shows a detailed savings report before touching anything.",
+          step3_num: "03 — SHRINK",
+          step3_h3: "One click to convert",
+          step3_p:
+            "Converted files land in a <code>shrinkified/</code> folder. Originals are untouched. If a conversion makes a file bigger, it's discarded.",
+          feat_label: "Features",
+          feat_h3: "Everything your media library needs.",
+          feat_p: "Built for everyday people and power users alike.",
+          feat1_h3: "H.264 → H.265 video conversion",
+          feat1_p:
+            "Re-encodes old MP4, MOV, AVI, and MKV files to HEVC — the same quality, half the size. Uses your GPU automatically on Apple Silicon, NVIDIA, Intel, and AMD hardware.",
+          feat1_badge: "Up to 60% smaller",
+          feat2_h3: "JPEG & PNG → HEIF conversion",
+          feat2_p:
+            "Converts photos to the modern HEIF format, the same format iPhones and recent Androids shoot in natively. EXIF metadata, GPS location, and date are fully preserved.",
+          feat2_badge: "Up to 40% smaller",
+          feat3_h3: "Duplicate file detection",
+          feat3_p:
+            "Finds files that are identical regardless of filename using fast file hashing. Shows you exactly which files are duplicates and lets you delete them safely.",
+          feat4_h3: "Beautiful HTML report",
+          feat4_p_pre: "After every scan,",
+          feat4_p_post:
+            "generates a detailed report showing codec distribution, estimated savings breakdown, and a list of every file — organized into categories.",
+          feat5_h3: "Folder structure preserved",
+          feat5_p:
+            'Enable "Preserve folder structure" and your subfolder hierarchy is mirrored inside the output folder. Your album organization stays intact.',
+          feat6_h3: "Originals are never touched",
+          feat6_p:
+            "Every converted file goes into a <code>shrinkified/</code> subfolder. Your source files are read-only. Dry run mode lets you preview results before committing.",
+          results_label: "Real results",
+          results_h3: "See the difference.",
+          results_p: "Actual results from a real Google Takeout export.",
+          results_before: "Before",
+          results_after: "After Shrinkify",
+          results_total_label: "Total saved in this example",
+          dl_label: "Download",
+          dl_h3: "Free on every platform.",
+          dl_p: "Download the right version for your operating system. All builds are produced automatically by GitHub Actions.",
+          dl_badge_tested: "Tested ✓",
+          dl_win_p:
+            "Windows 10 or later. Installer-free — just download and run.",
+          dl_win_btn: "↓ Download .exe",
+          dl_mac_p:
+            "macOS 12 or later. Apple Silicon native. GPU acceleration via VideoToolbox.",
+          dl_mac_btn: "↓ Download .zip",
+          dl_linux_p:
+            "Ubuntu 22.04+. Run the binary directly. May require <code>chmod +x Shrinkify</code>.",
+          dl_linux_btn: "↓ Download binary",
+          dl_mobile_badge: "Possible future release",
+          dl_mobile_p:
+            "Mobile support is not currently available. We may explore iOS and Android builds in a future release as the project matures.",
+          dl_mobile_btn: "Not available yet",
+          dl_note:
+            '<strong>⚠ Requires ffmpeg</strong> — Shrinkify uses ffmpeg for video analysis and conversion. Install it from <a href="https://ffmpeg.org/download.html" target="_blank">ffmpeg.org</a> and make sure it\'s in your system PATH. On macOS: <code>brew install ffmpeg</code>. On Linux: <code>sudo apt install ffmpeg</code>.',
+          guide_label: "Quick start guide",
+          guide_h3: "Up and running in minutes.",
+          guide_p: "Scan according to your requirements.",
+          guide_folder_mode: "Folder Mode",
+          guide_single_mode: "Single File Mode",
+          guide_tab_folder: "🗂️ Folder Mode",
+          guide_tab_single: "📄 Single File Mode",
+          guide_f1_h3: 'Open Shrinkify and choose "Folder"',
+          guide_f1_p:
+            "The welcome screen lets you choose between a single file or an entire folder.",
+          guide_f2_h3: "Select your folder and click Analyze",
+          guide_f2_p:
+            "Shrinkify scans every file, finds duplicates, and shows an estimated savings report.",
+          guide_f3_h3: "Try Dry Run first",
+          guide_f3_p:
+            'Check "Dry run" to preview what would happen without touching any files.',
+          guide_f4_h3: "Click Convert Files",
+          guide_f4_p:
+            "Converted files appear in a <code>shrinkified/</code> subfolder. Originals untouched.",
+          guide_s1_h3: 'Open Shrinkify and choose "Single File"',
+          guide_s1_p:
+            "Perfect for converting one video or photo without scanning a whole folder.",
+          guide_s2_h3: "Browse to your file",
+          guide_s2_p:
+            "Supports MP4, MOV, AVI, MKV, JPG, PNG, HEIC, WEBP, and more.",
+          guide_s3_h3: "Choose a quality preset",
+          guide_s3_p:
+            "Balanced is the recommended default. Maximum Shrink gives the smallest file. Conservative is safest for archival.",
+          guide_s4_h3: "Analyze then Convert",
+          guide_s4_p:
+            "The converted file lands next to the original in a <code>shrinkified/</code> folder.",
+          compat_label: "Compatibility",
+          compat_h3: "Will the converted files open on my devices?",
+          compat_p:
+            "H.265 and HEIF are modern standards supported on all devices <strong>from roughly 2018</strong> onwards. Here's a quick reference before you convert your whole library.",
+          compat_p_strong: "from roughly 2018",
+          compat_good_h4: "✅ Well supported",
+          compat_good_1:
+            'Windows 10 / 11 <span style="color: var(--muted)">(free HEVC extension from Microsoft Store)</span>',
+          compat_good_2: "macOS High Sierra (10.13) and later",
+          compat_good_3: "iPhone / iPad — iOS 11 and later",
+          compat_good_4: "Android 9 and later",
+          compat_good_5: "Smart TVs from 2018 onwards",
+          compat_good_6: "VLC on any platform",
+          compat_bad_h4: "⚠️ May have issues",
+          compat_bad_1: "Windows 7 / 8 — no native H.265 or HEIF support",
+          compat_bad_2: "Android 8 and older — inconsistent hardware support",
+          compat_bad_3: "Smart TVs older than 2018",
+          compat_bad_4: "Old digital photo frames",
+          compat_footer:
+            "If you share files with people on older devices, keep your originals. Shrinkify <strong>never deletes them</strong>.",
+          footer_desc:
+            "Analyze media files, suggest codec conversions, detect duplicates, and generate a detailed HTML report. Free and open source, forever.",
+          footer_github: "GitHub",
+          footer_releases: "Releases",
+          footer_bug: "Report a bug",
+          footer_made_by:
+            'Made by <a href="https://github.com/nazimcanislam" target="_blank">Nazımcan İslam</a>',
+          footer_collab:
+            '🤝 Built in collaboration with <a href="https://claude.ai" target="_blank">Claude</a> (Anthropic)',
+        },
+        tr: {
+          page_title: "Shrinkify — Medya Kütüphanenize Nefes Aldırın",
+          nav_how: "Nasıl çalışır",
+          nav_guide: "Rehber",
+          nav_download: "↓ İndir",
+          hero_badge: "Ücretsiz & Açık Kaynak",
+          hero_h1: "Medya kütüphanenize <em>nefes aldırın.</em>",
+          hero_p:
+            "Shrinkify, eski H.264 videolarınızı ve JPEG fotoğraflarınızı modern H.265 ve HEIF formatlarına dönüştürür — tek bir piksel kalite kaybı olmadan kütüphane boyutunuzu %60'a kadar küçültür.",
+          hero_btn_download: "↓ Ücretsiz indir",
+          hero_btn_github: "GitHub'da görüntüle",
+          ticker_label: "Canlı Örnek",
+          ticker_total: "Toplam sonuç",
+          stat_video: "H.264 videolarda ortalama küçülme",
+          stat_photo: "JPEG fotoğraflarda ortalama küçülme",
+          stat_platforms: "platform — Windows, macOS, Linux",
+          how_label: "Nasıl çalışır",
+          how_h3: "Üç adım. Sıfır kalite kaybı.",
+          how_p:
+            "teknik ağır işleri sizin adınıza yapar; H.265'in ne olduğunu bilmenize gerek kalmaz.",
+          step1_num: "01 — SEÇ",
+          step1_h3: "Bir klasöre yönlendirin",
+          step1_p:
+            "Google Takeout dışa aktarmanızı, kamera yedeklerinizi veya fotoğraf ve videolarla dolu herhangi bir klasörü ekleyin.",
+          step2_num: "02 — ANALİZ ET",
+          step2_h3: "Taramasını bekleyin",
+          step2_p:
+            "her dosyanın codec'ini, bit hızını ve formatını okur. Kopyaları bulur. Herhangi bir dosyaya dokunmadan önce ayrıntılı bir tasarruf raporu gösterir.",
+          step3_num: "03 — KÜÇÜLT",
+          step3_h3: "Tek tıkla dönüştürün",
+          step3_p:
+            "Dönüştürülen dosyalar <code>shrinkified/</code> klasörüne kaydedilir. Orijinaller dokunulmadan kalır. Bir dönüşüm dosyayı büyütürse otomatik olarak iptal edilir.",
+          feat_label: "Özellikler",
+          feat_h3: "Medya kütüphanenizin ihtiyacı olan her şey.",
+          feat_p:
+            "Günlük kullanıcılar ve ileri düzey kullanıcılar için tasarlandı.",
+          feat1_h3: "H.264 → H.265 video dönüşümü",
+          feat1_p:
+            "Eski MP4, MOV, AVI ve MKV dosyalarını HEVC'ye yeniden kodlar — aynı kalite, yarı boyut. Apple Silicon, NVIDIA, Intel ve AMD donanımlarında GPU'yu otomatik olarak kullanır.",
+          feat1_badge: "%60'a kadar daha küçük",
+          feat2_h3: "JPEG & PNG → HEIF dönüşümü",
+          feat2_p:
+            "Fotoğrafları modern HEIF formatına dönüştürür; iPhone'ların ve yeni Android cihazların doğal olarak kullandığı format. EXIF meta verileri, GPS konumu ve tarih eksiksiz korunur.",
+          feat2_badge: "%40'a kadar daha küçük",
+          feat3_h3: "Yinelenen dosya tespiti",
+          feat3_p:
+            "Dosya adından bağımsız olarak hızlı dosya karma yöntemiyle aynı dosyaları bulur. Hangi dosyaların kopya olduğunu tam olarak gösterir ve güvenle silmenizi sağlar.",
+          feat4_h3: "Güzel HTML raporu",
+          feat4_p_pre: "Her taramadan sonra",
+          feat4_p_post:
+            "codec dağılımını, tahmini tasarruf dökümünü ve kategorilere ayrılmış her dosyanın listesini içeren ayrıntılı bir rapor oluşturur.",
+          feat5_h3: "Klasör yapısı korunur",
+          feat5_p:
+            '"Klasör yapısını koru" seçeneğini etkinleştirdiğinizde alt klasör hiyerarşiniz çıktı klasöründe de yansıtılır. Albüm düzeniniz bozulmaz.',
+          feat6_h3: "Orijinaller asla dokunulmaz",
+          feat6_p:
+            "Dönüştürülen her dosya <code>shrinkified/</code> alt klasörüne kaydedilir. Kaynak dosyalarınız salt okunurdur. Kuru çalıştırma modu, değişiklikleri kaydetmeden önce sonuçları önizlemenizi sağlar.",
+          results_label: "Gerçek sonuçlar",
+          results_h3: "Farkı görün.",
+          results_p:
+            "Gerçek bir Google Takeout dışa aktarmasından elde edilen sonuçlar.",
+          results_before: "Önce",
+          results_after: "Shrinkify Sonrası",
+          results_total_label: "Bu örnekte toplam kazanım",
+          dl_label: "İndir",
+          dl_h3: "Her platformda ücretsiz.",
+          dl_p: "İşletim sisteminize uygun sürümü indirin. Tüm derlemeler GitHub Actions tarafından otomatik olarak üretilir.",
+          dl_badge_tested: "Test edildi ✓",
+          dl_win_p:
+            "Windows 10 veya üzeri. Kurulum gerektirmez — sadece indirip çalıştırın.",
+          dl_win_btn: "↓ .exe indir",
+          dl_mac_p:
+            "macOS 12 veya üzeri. Apple Silicon için optimize edildi. VideoToolbox ile GPU hızlandırma.",
+          dl_mac_btn: "↓ .zip indir",
+          dl_linux_p:
+            "Ubuntu 22.04+. İkili dosyayı doğrudan çalıştırın. <code>chmod +x Shrinkify</code> gerekebilir.",
+          dl_linux_btn: "↓ İkili dosyayı indir",
+          dl_mobile_badge: "Olası gelecek sürüm",
+          dl_mobile_p:
+            "Mobil destek şu anda mevcut değil. Proje olgunlaştıkça gelecek bir sürümde iOS ve Android desteği eklenebilir.",
+          dl_mobile_btn: "Henüz mevcut değil",
+          dl_note:
+            '<strong>⚠ ffmpeg gereklidir</strong> — Shrinkify, video analizi ve dönüşümü için ffmpeg kullanır. <a href="https://ffmpeg.org/download.html" target="_blank">ffmpeg.org</a> adresinden yükleyin ve sistem PATH\'inizde olduğundan emin olun. macOS\'ta: <code>brew install ffmpeg</code>. Linux\'ta: <code>sudo apt install ffmpeg</code>.',
+          guide_label: "Hızlı başlangıç rehberi",
+          guide_h3: "Dakikalar içinde hazır.",
+          guide_p: "İhtiyacınıza göre tarama yapın.",
+          guide_folder_mode: "Klasör Modu",
+          guide_single_mode: "Tek Dosya Modu",
+          guide_tab_folder: "🗂️ Klasör Modu",
+          guide_tab_single: "📄 Tek Dosya Modu",
+          guide_f1_h3: 'Shrinkify\'ı açın ve "Klasör" seçeneğini seçin',
+          guide_f1_p:
+            "Karşılama ekranı, tek dosya veya tüm klasör arasında seçim yapmanızı sağlar.",
+          guide_f2_h3: "Klasörünüzü seçin ve Analiz Et'e tıklayın",
+          guide_f2_p:
+            "Shrinkify her dosyayı tarar, kopyaları bulur ve tahmini tasarruf raporu gösterir.",
+          guide_f3_h3: "Önce Kuru Çalıştırma'yı deneyin",
+          guide_f3_p:
+            '"Kuru çalıştırma" seçeneğini işaretleyerek hiçbir dosyaya dokunmadan ne olacağını önizleyin.',
+          guide_f4_h3: "Dosyaları Dönüştür'e tıklayın",
+          guide_f4_p:
+            "Dönüştürülen dosyalar <code>shrinkified/</code> alt klasöründe görünür. Orijinaller dokunulmaz.",
+          guide_s1_h3: 'Shrinkify\'ı açın ve "Tek Dosya" seçeneğini seçin',
+          guide_s1_p:
+            "Tüm klasörü taramadan tek bir video veya fotoğrafı dönüştürmek için idealdir.",
+          guide_s2_h3: "Dosyanıza gidin",
+          guide_s2_p:
+            "MP4, MOV, AVI, MKV, JPG, PNG, HEIC, WEBP ve daha fazlasını destekler.",
+          guide_s3_h3: "Bir kalite önayarı seçin",
+          guide_s3_p:
+            "Dengeli, önerilen varsayılandır. Maksimum Küçültme en küçük dosyayı verir. Muhafazakâr arşivleme için en güvenlidir.",
+          guide_s4_h3: "Analiz Et, ardından Dönüştür",
+          guide_s4_p:
+            "Dönüştürülen dosya, orijinalinin yanında <code>shrinkified/</code> klasörüne kaydedilir.",
+          compat_label: "Uyumluluk",
+          compat_h3: "Dönüştürülen dosyalar cihazlarımda açılır mı?",
+          compat_p:
+            "H.265 ve HEIF, <strong>yaklaşık 2018</strong> sonrası tüm cihazlarda desteklenen modern standartlardır. Tüm kütüphanenizi dönüştürmeden önce hızlı bir başvuru kaynağı olarak kullanın.",
+          compat_p_strong: "yaklaşık 2018",
+          compat_good_h4: "✅ İyi destekleniyor",
+          compat_good_1:
+            'Windows 10 / 11 <span style="color: var(--muted)">(Microsoft Store\'dan ücretsiz HEVC uzantısı)</span>',
+          compat_good_2: "macOS High Sierra (10.13) ve üzeri",
+          compat_good_3: "iPhone / iPad — iOS 11 ve üzeri",
+          compat_good_4: "Android 9 ve üzeri",
+          compat_good_5: "2018 ve sonrası akıllı TV'ler",
+          compat_good_6: "Her platformda VLC",
+          compat_bad_h4: "⚠️ Sorun yaşanabilir",
+          compat_bad_1: "Windows 7 / 8 — H.265 veya HEIF için yerli destek yok",
+          compat_bad_2: "Android 8 ve öncesi — tutarsız donanım desteği",
+          compat_bad_3: "2018 öncesi akıllı TV'ler",
+          compat_bad_4: "Eski dijital fotoğraf çerçeveleri",
+          compat_footer:
+            "Eski cihaz kullanan kişilerle dosya paylaşıyorsanız orijinallerinizi saklayın. Shrinkify <strong>hiçbir zaman silmez</strong>.",
+          footer_desc:
+            "Medya dosyalarını analiz edin, codec dönüşümleri önerin, kopyaları tespit edin ve ayrıntılı HTML raporu oluşturun. Sonsuza kadar ücretsiz ve açık kaynak.",
+          footer_github: "GitHub",
+          footer_releases: "Sürümler",
+          footer_bug: "Hata bildir",
+          footer_made_by:
+            '<a href="https://github.com/nazimcanislam" target="_blank">Nazımcan İslam</a> tarafından yapıldı',
+          footer_collab:
+            '🤝 <a href="https://claude.ai" target="_blank">Claude</a> (Anthropic) ile iş birliği içinde geliştirildi',
+        },
+      };
+
+      let currentLang = "en";
+
+      function applyLang(lang) {
+        const t = translations[lang];
+        if (!t) return;
+        currentLang = lang;
+
+        // <html lang="">
+        document.getElementById("html-root").lang = lang;
+
+        // <title>
+        const titleEl = document.querySelector("[data-i18n-title]");
+        if (titleEl) titleEl.textContent = t["page_title"];
+
+        // all data-i18n elements
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
+          const key = el.dataset.i18n;
+          if (t[key] !== undefined) el.innerHTML = t[key];
+        });
+
+        // lang button shows the opposite language
+        const btn = document.getElementById("lang-btn");
+        if (btn) btn.textContent = lang === "tr" ? "🇬🇧 EN" : "🇹🇷 TR";
+
+        localStorage.setItem("shrinkify-lang", lang);
+      }
+
+      function toggleLang() {
+        applyLang(currentLang === "tr" ? "en" : "tr");
+      }
+
+      // Detect language on load
+      (function () {
+        const saved = localStorage.getItem("shrinkify-lang");
+        if (saved && translations[saved]) {
+          applyLang(saved);
+        } else {
+          const browser = navigator.language || "";
+          applyLang(browser.startsWith("tr") ? "tr" : "en");
+        }
+      })();
+
+      // ── OS detection ──────────────────────────────────────────────────────
       function getOS() {
         const userAgent =
           window.navigator.userAgent || window.navigator.vendor || window.opera;
@@ -1450,23 +1899,10 @@
         ) {
           return "iOS";
         }
-
-        if (/Macintosh|MacIntel|MacPPC|Mac68K/.test(userAgent)) {
-          return "macOS";
-        }
-
-        if (/android/i.test(userAgent)) {
-          return "Android";
-        }
-
-        if (/Win32|Win64|Windows|WinCE/.test(userAgent)) {
-          return "Windows";
-        }
-
-        if (/Linux|X11/.test(userAgent)) {
-          return "Linux";
-        }
-
+        if (/Macintosh|MacIntel|MacPPC|Mac68K/.test(userAgent)) return "macOS";
+        if (/android/i.test(userAgent)) return "Android";
+        if (/Win32|Win64|Windows|WinCE/.test(userAgent)) return "Windows";
+        if (/Linux|X11/.test(userAgent)) return "Linux";
         return "unknown";
       }
 
@@ -1490,7 +1926,7 @@
           .classList.add(detectedOsClassName);
       }
 
-      // Tabs
+      // ── Tabs ──────────────────────────────────────────────────────────────
       document.querySelectorAll(".tab-btn").forEach((b) => {
         b.addEventListener("click", () => {
           document
