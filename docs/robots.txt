@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://nazimcanislam.github.io/shrinkify/sitemap.xml
