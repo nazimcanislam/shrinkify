@@ -1,6 +1,6 @@
 [Setup]
 AppName=Shrinkify
-AppVersion=1.0.4
+AppVersion=1.0.5
 DefaultDirName={autopf}\Shrinkify
 DefaultGroupName=Shrinkify
 OutputBaseFilename=Shrinkify-Setup
