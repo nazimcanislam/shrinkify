@@ -227,12 +227,12 @@ pip install pyinstaller
 
 **Windows**
 ```bash
-pyinstaller --onefile --windowed --icon=icon.ico --name=Shrinkify gui.py
+pyinstaller --onefile --windowed --icon=assets/icon.ico --name=Shrinkify gui.py
 ```
 
 **macOS**
 ```bash
-pyinstaller --onefile --windowed --icon=icon.png --name=Shrinkify gui.py
+pyinstaller --onefile --windowed --icon=assets/icon.png --name=Shrinkify gui.py
 ```
 
 **Linux**
@@ -250,15 +250,25 @@ The executable will be in the `dist/` folder.
 
 ```
 shrinkify/
+├── .github/workflows/
+├── assets/
+│   ├── icon.ico
+│   ├── icon.png
+│   └── favicon/
 ├── core/
 │   ├── scanner.py      # ffprobe analysis + hash/duplicate detection
 │   ├── analyzer.py     # conversion decision logic + quality presets
 │   ├── converter.py    # ffmpeg (video) + pillow-heif (image) conversion
 │   └── reporter.py     # HTML + terminal report
+├── docs/
+│   └── index.html      # GitHub Pages deployment
 ├── cli.py              # Command-line interface
 ├── gui.py              # tkinter GUI
-├── icon.png            # App icon (512×512)
-├── icon.ico            # App icon (Windows, multi-size)
+├── version.py
+├── shrinkify.iss
+├── Shrinkify.spec
+├── requirements.txt
+├── .gitignore
 └── README.md
 ```
 

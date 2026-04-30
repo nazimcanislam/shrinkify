@@ -23,6 +23,18 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Update ISS version
+        run: |
+          python -c "
+          import re
+          from version import __version__
+          with open('shrinkify.iss', 'r') as f:
+              content = f.read()
+          content = re.sub(r'(#define MyAppVersion\s+\")[^\"]+\"', rf'\g<1>{__version__}\"', content)
+          with open('shrinkify.iss', 'w') as f:
+              f.write(content)
+          "
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -30,13 +42,13 @@ jobs:
 
       - name: Build executable
         run: |
-          pyinstaller --onefile --windowed --icon=icon.ico --name=Shrinkify gui.py `
+          pyinstaller --onefile --windowed --icon=assets/icon.ico --name=Shrinkify gui.py `
             --hidden-import=pillow_heif `
             --hidden-import=PIL `
             --hidden-import=PIL.Image `
             --collect-all pillow_heif `
-            --add-data "icon.png;." `
-            --add-data "icon.ico;."
+            --add-data "assets/icon.png;." `
+            --add-data "assets/icon.ico;."
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -81,12 +93,12 @@ jobs:
 
       - name: Build executable
         run: |
-          pyinstaller --onefile --windowed --icon=icon.png --name=Shrinkify gui.py \
+          pyinstaller --onefile --windowed --icon=assets/icon.png --name=Shrinkify gui.py \
             --hidden-import=pillow_heif \
             --hidden-import=PIL \
             --hidden-import=PIL.Image \
             --collect-all pillow_heif \
-            --add-data "icon.png:." \
+            --add-data "assets/icon.png:." \
 
       - name: Zip the .app bundle
         run: |
@@ -136,8 +148,8 @@ jobs:
             --hidden-import=PIL \
             --hidden-import=PIL.Image \
             --collect-all pillow_heif \
-            --add-data "icon.png:." \
-            --add-data "icon.ico:."
+            --add-data "assets/icon.png:." \
+            --add-data "assets/icon.ico:."
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

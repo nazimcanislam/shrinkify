@@ -250,15 +250,25 @@ pyinstaller --onefile --name=Shrinkify gui.py
 
 ```
 shrinkify/
+├── .github/workflows/
+├── assets/
+│   ├── icon.ico
+│   ├── icon.png
+│   └── favicon/
 ├── core/
 │   ├── scanner.py      # ffprobe analizi + hash/kopya tespiti
 │   ├── analyzer.py     # dönüştürme karar mantığı + kalite profilleri
 │   ├── converter.py    # ffmpeg (video) + pillow-heif (görüntü) dönüştürme
 │   └── reporter.py     # HTML + terminal raporu
-├── cli.py              # Komut satırı arayüzü
+├── docs/
+│   └── index.html      # GitHub Pages kurulumu
+├── cli.py              # Command-line interface
 ├── gui.py              # tkinter GUI
-├── icon.png            # Uygulama ikonu (512×512)
-├── icon.ico            # Uygulama ikonu (Windows, çok boyutlu)
+├── version.py
+├── shrinkify.iss
+├── Shrinkify.spec
+├── requirements.txt
+├── .gitignore
 └── README.md
 ```
 

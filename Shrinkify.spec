@@ -23,8 +23,8 @@ a = Analysis(
     pathex=['.'],
     binaries=pillow_heif_binaries,
     datas=[
-        ('icon.png', '.'),       # App icon — copied next to the exe
-        ('icon.ico', '.'),
+        ('assets/icon.png', '.'),       # App icon — copied next to the exe
+        ('assets/icon.ico', '.'),
         *pillow_heif_datas,
     ],
     hiddenimports=[
@@ -75,7 +75,7 @@ exe = EXE(
     # ── Windows-specific ──────────────────────────────────────
     # console=False  →  no black terminal window behind the GUI
     console=False,
-    icon='icon.ico' if sys.platform == 'win32' else 'icon.png',
+    icon='assets/icon.ico' if sys.platform == 'win32' else 'assets/icon.png',
     # Embed a Windows manifest that declares DPI awareness so text isn't blurry
     uac_admin=False,
 )
