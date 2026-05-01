@@ -16,7 +16,7 @@
 ## ✨ Özellikler
 
 - 📊 **Akıllı Analiz** — ffprobe her dosya için codec, bit hızı, çözünürlük ve format bilgisini çıkarır
-- 🔄 **Dönüştürme** — H.264 → H.265 (ffmpeg), JPEG/PNG → HEIF (pillow-heif)
+- 🔄 **Dönüştürme** — H.264 → H.265 (ffmpeg), JPEG → HEIF (pillow-heif)
 - 🎚️ **Kalite Profilleri** — Maksimum Küçültme / Dengeli / Koruyucu
 - 📁 **Eksiksiz Çıktı** — dönüştürülmemiş dosyaları da kopyalar; çıktı klasörü tamamen bağımsız olur
 - 🔁 **Kopya Tespiti** — hash tabanlı tespit ve silme
@@ -206,7 +206,6 @@ C:\Takeout\
 | H.264 (AVC) video | H.265 (HEVC) | ffmpeg | ~%55 |
 | MPEG-4, MPEG-2 video | H.265 (HEVC) | ffmpeg | ~%55 |
 | JPEG fotoğraf | HEIF | pillow-heif | ~%30–40 |
-| PNG fotoğraf | HEIF | pillow-heif | ~%30–40 |
 | HEVC, AV1 video | — | — | Dokunulmaz |
 | HEIF fotoğraf | — | — | Dokunulmaz |
 | Düşük bit hızlı video (<3 Mbps) | — | — | Atlanır (zaten küçük) |

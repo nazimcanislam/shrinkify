@@ -16,7 +16,7 @@
 ## ✨ Features
 
 - 📊 **Smart Analysis** — ffprobe extracts codec, bitrate, resolution, and format for every file
-- 🔄 **Conversion** — H.264 → H.265 (ffmpeg), JPEG/PNG → HEIF (pillow-heif)
+- 🔄 **Conversion** — H.264 → H.265 (ffmpeg), JPEG → HEIF (pillow-heif)
 - 🎚️ **Quality Presets** — Maximum Shrink / Balanced / Conservative
 - 📁 **Complete Output** — optionally copies unconverted files too, so the output folder is self-contained
 - 🔁 **Duplicate Detection** — hash-based detection and deletion
@@ -206,7 +206,6 @@ With **"Copy originals"** enabled, unconverted files are also copied into `shrin
 | H.264 (AVC) video | H.265 (HEVC) | ffmpeg | ~55% |
 | MPEG-4, MPEG-2 video | H.265 (HEVC) | ffmpeg | ~55% |
 | JPEG photo | HEIF | pillow-heif | ~30–40% |
-| PNG photo | HEIF | pillow-heif | ~30–40% |
 | HEVC, AV1 video | — | — | Not touched |
 | HEIF photo | — | — | Not touched |
 | Low-bitrate video (<3 Mbps) | — | — | Skipped (already lean) |
