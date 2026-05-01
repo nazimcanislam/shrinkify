@@ -10,11 +10,14 @@ OUTDATED_VIDEO_CODECS = {
     'xvid', 'divx', 'vp8', 'theora', 'wmv2', 'wmv3', 'vc1'
 }
 MODERN_VIDEO_CODECS = {'hevc', 'h265', 'av1', 'vp9'}
-OUTDATED_IMAGE_FORMATS = {'MJPEG', 'PNG', 'BMP', 'TIFF', 'UNKNOWN'}
-MODERN_IMAGE_FORMATS = {'HEVC', 'AV1', 'WEBP'}
+OUTDATED_IMAGE_FORMATS = {'MJPEG', 'BMP', 'TIFF', 'UNKNOWN'}
+MODERN_IMAGE_FORMATS  = {'HEVC', 'AV1', 'WEBP'}
+
+# PNG is lossless — converting to lossy HEIF can corrupt screenshots, graphics,
+# and illustrations. We skip PNG by default and surface a warning instead.
+PNG_LOSSLESS_FORMATS = {'PNG'}
 
 # Quality presets: (video_crf, image_pillow_quality, label, description)
-# image_pillow_quality: pillow-heif quality 0-100
 QUALITY_PRESETS = {
     'max':          (28, 60, 'Maximum Shrink',  'Smallest file size. Slight quality reduction, unlikely to be noticeable.'),
     'balanced':     (24, 72, 'Balanced',         'Best trade-off between size and quality. Recommended default.'),
@@ -43,6 +46,7 @@ class AnalysisSummary:
     image_size_bytes: int = 0
     images_to_convert: int = 0
     images_already_modern: int = 0
+    images_png_skipped: int = 0   # PNGs skipped due to lossless content risk
 
     conversion_candidates_size_bytes: int = 0
     estimated_size_after_conversion_bytes: int = 0
@@ -120,6 +124,13 @@ def _analyze_image(mf: MediaFile, preset: str) -> None:
     fmt = (mf.image_format or '').upper()
     if fmt in MODERN_IMAGE_FORMATS:
         return
+
+    # PNG is lossless — skip conversion to avoid quality loss on screenshots/graphics.
+    # The conversion_reason is set so the HTML report can surface a note to the user.
+    if fmt in PNG_LOSSLESS_FORMATS or ext == '.png':
+        mf.conversion_reason = 'PNG skipped — lossless format, converting may reduce quality'
+        return
+
     if fmt in OUTDATED_IMAGE_FORMATS or fmt == 'MJPEG':
         mf.needs_conversion = True
         fmt_label = 'JPEG' if fmt == 'MJPEG' else fmt
@@ -157,6 +168,8 @@ def analyze_all(media_files: list[MediaFile], preset: str = DEFAULT_PRESET) -> A
                 summary.conversion_candidates_size_bytes += mf.size_bytes
                 summary.estimated_size_after_conversion_bytes += \
                     (mf.estimated_output_size_bytes or mf.size_bytes)
+            elif fmt_key == 'PNG':
+                summary.images_png_skipped += 1
             else:
                 summary.images_already_modern += 1
         if mf.is_duplicate:

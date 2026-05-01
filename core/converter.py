@@ -11,9 +11,6 @@ import sys
 from pathlib import Path
 from dataclasses import dataclass
 
-# ── Top-level imports for pillow-heif ────────────────────────
-# Python caches modules in sys.modules so importing at function level
-# works fine performance-wise, but top-level is cleaner and fails fast.
 try:
     import pillow_heif as _pillow_heif
     from PIL import Image as _PILImage
@@ -22,22 +19,9 @@ try:
 except ImportError:
     _PILLOW_HEIF_OK = False
 
-from core.scanner import MediaFile, _find_binary as _find_bin
+from core.utils import FFMPEG, no_window
+from core.scanner import MediaFile
 from core.analyzer import QUALITY_PRESETS, DEFAULT_PRESET
-
-_FFMPEG = _find_bin('ffmpeg')
-
-
-# ── Subprocess helper ─────────────────────────────────────────
-
-def _no_window() -> dict:
-    """Prevents a console window flashing on Windows (PyInstaller --windowed)."""
-    if sys.platform == 'win32':
-        si = subprocess.STARTUPINFO()
-        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        si.wShowWindow = subprocess.SW_HIDE
-        return {'startupinfo': si, 'creationflags': subprocess.CREATE_NO_WINDOW}
-    return {}
 
 
 # ── Hardware encoder detection ────────────────────────────────
@@ -55,9 +39,9 @@ def detect_hw_encoder() -> str | None:
     """
     try:
         result = subprocess.run(
-            [_FFMPEG, '-encoders'],
+            [FFMPEG, '-encoders'],
             capture_output=True, encoding='utf-8', errors='replace', timeout=10,
-            **_no_window()
+            **no_window()
         )
         output = result.stdout + result.stderr
     except Exception:
@@ -137,7 +121,7 @@ def _image_quality(preset: str) -> int:
 
 
 def _video_cmd(mf: MediaFile, output_path: Path, use_hw_accel: bool, preset: str) -> list[str]:
-    cmd = [_FFMPEG, '-i', str(mf.path), '-y']
+    cmd = [FFMPEG, '-i', str(mf.path), '-y']
     crf = _video_crf(preset)
     if use_hw_accel:
         hw = get_hw_encoder()
@@ -231,7 +215,7 @@ def convert_file(
     cmd = _video_cmd(mf, output_path, use_hw_accel, preset)
     try:
         result = subprocess.run(cmd, capture_output=True, timeout=3600,
-                                encoding='utf-8', errors='replace', **_no_window())
+                                encoding='utf-8', errors='replace', **no_window())
         if result.returncode == 0 and output_path.exists():
             final_size = output_path.stat().st_size
             if final_size >= mf.size_bytes:

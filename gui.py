@@ -46,8 +46,8 @@ def _apply_dark_titlebar(hwnd):
 # ── macOS font scaling ────────────────────────────────────────
 # On Retina displays tkinter uses logical pixels; bump base sizes slightly.
 _IS_MACOS = sys.platform == 'darwin'
-_FS = 1 if not _IS_MACOS else 1   # multiplier reserved; actual bump via sizes below
 
+from core.utils import FFPROBE
 from core.scanner import scan_directory, scan_file, compute_hashes, find_duplicates
 from core.analyzer import analyze_all, QUALITY_PRESETS, DEFAULT_PRESET
 from core.converter import convert_file, copy_unconverted, copy_size_skipped, delete_duplicates, get_hw_encoder
@@ -88,7 +88,7 @@ MONO_TTL = ('TkFixedFont',   15 if _IS_MACOS else 14, 'bold')
 # ─────────────────────────────────────────────────────────────
 def _check_ffmpeg() -> bool:
     try:
-        r = subprocess.run(['ffprobe', '-version'], capture_output=True, timeout=5)
+        r = subprocess.run([FFPROBE, '-version'], capture_output=True, timeout=5)
         return r.returncode == 0
     except Exception:
         return False
@@ -353,9 +353,19 @@ class ShrinkifyApp(tk.Tk):
             else:
                 left_canvas.yview_scroll(-1 * int(event.delta / 120), 'units')
 
-        left_outer.bind_all('<MouseWheel>', _left_mousewheel)
-        left_outer.bind_all('<Button-4>', _left_mousewheel)
-        left_outer.bind_all('<Button-5>', _left_mousewheel)
+        # Bind scroll only while the pointer is inside the left panel
+        def _bind_left_scroll(_event=None):
+            left_outer.bind_all('<MouseWheel>', _left_mousewheel)
+            left_outer.bind_all('<Button-4>', _left_mousewheel)
+            left_outer.bind_all('<Button-5>', _left_mousewheel)
+
+        def _unbind_left_scroll(_event=None):
+            left_outer.unbind_all('<MouseWheel>')
+            left_outer.unbind_all('<Button-4>')
+            left_outer.unbind_all('<Button-5>')
+
+        left_outer.bind('<Enter>', _bind_left_scroll)
+        left_outer.bind('<Leave>', _unbind_left_scroll)
 
         # Header with back button
         hdr = tk.Frame(left, bg=COLORS['surface'])

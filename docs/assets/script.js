@@ -39,9 +39,9 @@ const translations = {
     feat1_p:
       "Re-encodes old MP4, MOV, AVI, and MKV files to HEVC — the same quality, half the size. Uses your GPU automatically on Apple Silicon, NVIDIA, Intel, and AMD hardware.",
     feat1_badge: "Up to 60% smaller",
-    feat2_h3: "JPEG & PNG → HEIF conversion",
+    feat2_h3: "JPEG → HEIF conversion",
     feat2_p:
-      "Converts photos to the modern HEIF format, the same format iPhones and recent Androids shoot in natively. EXIF metadata, GPS location, and date are fully preserved.",
+      "Converts JPEG photos to the modern HEIF format, the same format iPhones and recent Androids shoot in natively. EXIF metadata, GPS location, and date are fully preserved.",
     feat2_badge: "Up to 40% smaller",
     feat3_h3: "Duplicate file detection",
     feat3_p:
@@ -103,7 +103,7 @@ const translations = {
     guide_s1_p:
       "Perfect for converting one video or photo without scanning a whole folder.",
     guide_s2_h3: "Browse to your file",
-    guide_s2_p: "Supports MP4, MOV, AVI, MKV, JPG, PNG, HEIC, WEBP, and more.",
+    guide_s2_p: "Supports MP4, MOV, AVI, MKV, JPG, HEIC, WEBP, and more. PNG files are scanned but not converted (lossless format).",
     guide_s3_h3: "Choose a quality preset",
     guide_s3_p:
       "Balanced is the recommended default. Maximum Shrink gives the smallest file. Conservative is safest for archival.",
@@ -179,9 +179,9 @@ const translations = {
     feat1_p:
       "Eski MP4, MOV, AVI ve MKV dosyalarını HEVC'ye yeniden kodlar — aynı kalite, yarı boyut. Apple Silicon, NVIDIA, Intel ve AMD donanımlarında GPU'yu otomatik olarak kullanır.",
     feat1_badge: "%60'a kadar daha küçük",
-    feat2_h3: "JPEG & PNG → HEIF dönüşümü",
+    feat2_h3: "JPEG → HEIF dönüşümü",
     feat2_p:
-      "Fotoğrafları modern HEIF formatına dönüştürür; iPhone'ların ve yeni Android cihazların doğal olarak kullandığı format. EXIF meta verileri, GPS konumu ve tarih eksiksiz korunur.",
+      "JPEG fotoğrafları modern HEIF formatına dönüştürür; iPhone'ların ve yeni Android cihazların doğal olarak kullandığı format. EXIF meta verileri, GPS konumu ve tarih eksiksiz korunur.",
     feat2_badge: "%40'a kadar daha küçük",
     feat3_h3: "Yinelenen dosya tespiti",
     feat3_p:
@@ -246,7 +246,7 @@ const translations = {
       "Tüm klasörü taramadan tek bir video veya fotoğrafı dönüştürmek için idealdir.",
     guide_s2_h3: "Dosyanıza gidin",
     guide_s2_p:
-      "MP4, MOV, AVI, MKV, JPG, PNG, HEIC, WEBP ve daha fazlasını destekler.",
+      "MP4, MOV, AVI, MKV, JPG, HEIC, WEBP ve daha fazlasını destekler. PNG dosyaları taranır ancak dönüştürülmez (kayıpsız format).",
     guide_s3_h3: "Bir kalite önayarı seçin",
     guide_s3_p:
       "Dengeli, önerilen varsayılandır. Maksimum Küçültme en küçük dosyayı verir. Muhafazakâr arşivleme için en güvenlidir.",
@@ -329,34 +329,39 @@ function toggleLang() {
 
 // ── OS detection ──────────────────────────────────────────────────────
 function getOS() {
-  const userAgent =
-    window.navigator.userAgent || window.navigator.vendor || window.opera;
-  const platform = window.navigator.platform || "unknown";
+  // Prefer the modern userAgentData API (Chrome 90+, Edge 90+).
+  // navigator.userAgent can be frozen/reduced in newer browsers, making
+  // regex matching unreliable — userAgentData.platform is the canonical source.
+  if (navigator.userAgentData && navigator.userAgentData.platform) {
+    const p = navigator.userAgentData.platform;
+    if (p === "Windows") return "Windows";
+    if (p === "macOS")   return "macOS";
+    if (p === "Linux")   return "Linux";
+    if (p === "Android") return "Android";
+    // iOS not exposed via userAgentData; fall through to legacy check
+  }
+
+  // Legacy fallback for Safari, Firefox, and older browsers
+  const ua       = navigator.userAgent || navigator.vendor || window.opera || "";
+  const platform = navigator.platform  || "";
 
   if (
-    /iPad|iPhone|iPod/.test(userAgent) ||
-    (platform === "MacIntel" && window.navigator.maxTouchPoints > 1)
-  ) {
-    return "iOS";
-  }
-  if (/Macintosh|MacIntel|MacPPC|Mac68K/.test(userAgent)) return "macOS";
-  if (/android/i.test(userAgent)) return "Android";
-  if (/Win32|Win64|Windows|WinCE/.test(userAgent)) return "Windows";
-  if (/Linux|X11/.test(userAgent)) return "Linux";
+    /iPad|iPhone|iPod/.test(ua) ||
+    (platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  ) return "iOS";
+  if (/Macintosh|MacIntel|MacPPC|Mac68K/.test(ua)) return "macOS";
+  if (/android/i.test(ua))                         return "Android";
+  if (/Win32|Win64|Windows|WinCE/.test(ua))        return "Windows";
+  if (/Linux|X11/.test(ua))                        return "Linux";
   return "unknown";
 }
 
 const os = getOS();
 const detectedOsClassName = "detected-os";
-if (os === "Windows") {
-  document.getElementById("dl-card-windows").classList.add(detectedOsClassName);
-} else if (os === "macOS") {
-  document.getElementById("dl-card-macos").classList.add(detectedOsClassName);
-} else if (os === "Linux") {
-  document.getElementById("dl-card-linux").classList.add(detectedOsClassName);
-} else if (os === "Android" || os === "iOS") {
-  document.getElementById("dl-card-phone").classList.add(detectedOsClassName);
-}
+if (os === "Windows")              document.getElementById("dl-card-windows").classList.add(detectedOsClassName);
+else if (os === "macOS")           document.getElementById("dl-card-macos").classList.add(detectedOsClassName);
+else if (os === "Linux")           document.getElementById("dl-card-linux").classList.add(detectedOsClassName);
+else if (os === "Android" || os === "iOS") document.getElementById("dl-card-mobile").classList.add(detectedOsClassName);
 
 // ── Tabs ──────────────────────────────────────────────────────────────
 document.querySelectorAll(".tab-btn").forEach((b) => {

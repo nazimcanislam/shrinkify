@@ -2,90 +2,35 @@
 scanner.py — Scans media files using ffprobe.
 """
 
-import subprocess
 import json
-import os
-import sys
-import shutil
-import hashlib
 import logging
+import os
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+
+from core.utils import FFPROBE, no_window, find_binary
+
+# Backward-compat aliases (converter.py used to import these from here)
+_find_binary = find_binary
+_FFPROBE     = FFPROBE
+_FFMPEG      = find_binary('ffmpeg')
+
+try:
+    import xxhash as _xxhash
+    _USE_XXHASH = True
+except ImportError:
+    import hashlib as _hashlib
+    _USE_XXHASH = False
 
 logger = logging.getLogger(__name__)
 
 SUPPORTED_VIDEO_EXTENSIONS = {'.mp4', '.mov', '.avi', '.mkv', '.wmv', '.flv', '.webm', '.m4v', '.3gp', '.ts'}
 SUPPORTED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.heic', '.heif', '.tiff', '.tif', '.bmp', '.webp'}
 
-
-def _find_binary(name: str) -> str:
-    """
-    Finds an external binary (ffmpeg / ffprobe) more robustly than shutil.which alone.
-
-    When running as a PyInstaller --windowed exe on Windows, double-clicking the app
-    may give it a restricted PATH that omits user-installed tools. We therefore also
-    check common installation locations and the directory that contains the running
-    executable.
-    """
-    # 1. Standard PATH lookup
-    found = shutil.which(name)
-    if found:
-        return found
-
-    # 2. Same directory as the running executable (useful when bundled or portable)
-    exe_dir = Path(sys.executable).parent
-    candidate = exe_dir / (name + ('.exe' if sys.platform == 'win32' else ''))
-    if candidate.exists():
-        return str(candidate)
-
-    # 3. PyInstaller _MEIPASS temp dir (--onefile extracts here at runtime)
-    meipass = getattr(sys, '_MEIPASS', None)
-    if meipass:
-        candidate = Path(meipass) / (name + ('.exe' if sys.platform == 'win32' else ''))
-        if candidate.exists():
-            return str(candidate)
-
-    # 4. Common Windows installation paths
-    if sys.platform == 'win32':
-        win_paths = [
-            Path(os.environ.get('LOCALAPPDATA', '')) / 'Programs' / 'ffmpeg' / 'bin' / f'{name}.exe',
-            Path('C:/ffmpeg/bin') / f'{name}.exe',
-            Path('C:/Program Files/ffmpeg/bin') / f'{name}.exe',
-            Path('C:/Program Files (x86)/ffmpeg/bin') / f'{name}.exe',
-        ]
-        for p in win_paths:
-            if p.exists():
-                return str(p)
-
-    # 5. Common macOS Homebrew paths
-    if sys.platform == 'darwin':
-        mac_paths = [
-            Path('/opt/homebrew/bin') / name,                       # Apple Silicon
-            Path('/usr/local/bin') / name,                          # Intel Mac
-            Path('/usr/bin') / name,                                # System (rare but possible if user installed via brew and symlinked)
-            Path(os.path.expanduser('~')) / 'homebrew/bin' / name,  # User's homebrew (if installed without sudo)
-        ]
-
-        # Also try a PATH lookup with common directories appended,
-        # since on macOS the PATH can be very inconsistent depending
-        # on how the app is launched (Terminal vs Finder vs PyInstaller).
-        extra_env_path = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-        found = shutil.which(name, path=extra_env_path)
-        if found:
-            return found
-
-        for p in mac_paths:
-            if p.exists():
-                return str(p)
-
-    # Fallback — return the bare name and let subprocess report the error
-    return name
-
-
-# Resolve once at import time so every subprocess call uses the same path
-_FFPROBE = _find_binary('ffprobe')
-_FFMPEG  = _find_binary('ffmpeg')
+# Output folder name — excluded from all scans to avoid re-processing converted files
+OUTPUT_DIR_NAME = 'shrinkified'
 
 
 @dataclass
@@ -132,25 +77,15 @@ class MediaFile:
         return self.path.name
 
 
+# Keep _no_window as an alias for any code that still imports it from here
 def _no_window() -> dict:
-    """
-    Returns subprocess kwargs that prevent a console window from flashing
-    on Windows when running from a GUI / PyInstaller --windowed build.
-    On other platforms returns an empty dict (no-op).
-    """
-    import sys
-    if sys.platform == 'win32':
-        si = subprocess.STARTUPINFO()
-        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        si.wShowWindow = subprocess.SW_HIDE
-        return {'startupinfo': si, 'creationflags': subprocess.CREATE_NO_WINDOW}
-    return {}
+    return no_window()
 
 
 def _run_ffprobe(file_path: Path) -> Optional[dict]:
     """Runs ffprobe and returns parsed JSON. Returns None on any failure."""
     cmd = [
-        _FFPROBE, '-v', 'quiet',
+        FFPROBE, '-v', 'quiet',
         '-print_format', 'json',
         '-show_format', '-show_streams',
         str(file_path)
@@ -159,7 +94,7 @@ def _run_ffprobe(file_path: Path) -> Optional[dict]:
         result = subprocess.run(
             cmd, capture_output=True, timeout=30,
             encoding='utf-8', errors='replace',
-            **_no_window()
+            **no_window()
         )
         if result.returncode == 0 and result.stdout.strip():
             return json.loads(result.stdout)
@@ -277,10 +212,13 @@ def scan_directory(
 ) -> tuple[list[MediaFile], list[tuple[Path, str]]]:
     """
     Recursively scans a directory.
+    Skips the 'shrinkified/' output folder to avoid re-processing converted files.
     Returns: (media_files, errors) where errors = [(path, message), ...]
     """
     all_files: list[Path] = []
-    for root, _, files in os.walk(directory):
+    for root, dirs, files in os.walk(directory):
+        # Prune the output directory in-place so os.walk never descends into it
+        dirs[:] = [d for d in dirs if d != OUTPUT_DIR_NAME]
         for fname in files:
             fpath = Path(root) / fname
             ext = fpath.suffix.lower()
@@ -306,13 +244,17 @@ def scan_directory(
 
 
 def compute_hashes(media_files: list[MediaFile], progress_callback=None) -> None:
-    """Computes file hashes in-place. Uses first+last 4 MB chunks for speed."""
+    """
+    Computes file hashes in-place. Uses first+last 4 MB chunks for speed.
+    Uses xxhash (xxh64) when available — ~3-5x faster than MD5.
+    Falls back to MD5 if xxhash is not installed.
+    """
     CHUNK_SIZE = 4 * 1024 * 1024
     for i, mf in enumerate(media_files):
         if progress_callback:
             progress_callback(i + 1, len(media_files), mf.filename)
         try:
-            h = hashlib.md5()
+            h = _xxhash.xxh64() if _USE_XXHASH else _hashlib.md5()
             with open(mf.path, 'rb') as f:
                 h.update(f.read(CHUNK_SIZE))
                 if mf.size_bytes > CHUNK_SIZE * 2:
