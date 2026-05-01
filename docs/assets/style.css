@@ -46,6 +46,12 @@
   margin: 0;
   padding: 0;
 }
+
+::selection {
+  background: var(--accent);
+  color: var(--btn-primary-text);
+}
+
 html {
   scroll-behavior: smooth;
   text-rendering: optimizeLegibility;
