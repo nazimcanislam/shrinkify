@@ -44,19 +44,6 @@ jobs:
           name: Shrinkify-Windows
           path: dist/Shrinkify.exe
 
-      - name: Build installer (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          choco install innosetup -y
-          iscc shrinkify.iss
-
-      - name: Upload installer
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: Shrinkify-Setup
-          path: Output/Shrinkify-Setup.exe
-
   # ── macOS ─────────────────────────────────────────────────────
   build-macos:
     name: Build — macOS
@@ -171,7 +158,6 @@ jobs:
             | Platform | File |
             |---|---|
             | Windows (portable) | `Shrinkify.exe` |
-            | Windows (installer) | `Shrinkify-Setup.exe` |
             | macOS | `Shrinkify-macOS.zip` |
             | Linux | `Shrinkify` |
 
@@ -180,7 +166,6 @@ jobs:
             Built with Python + ffmpeg + pillow-heif.
           files: |
             artifacts/Shrinkify-Windows/Shrinkify.exe
-            artifacts/Shrinkify-Setup/Shrinkify-Setup.exe
             artifacts/Shrinkify-macOS/Shrinkify-macOS.zip
             artifacts/Shrinkify-Linux/Shrinkify
           draft: false
