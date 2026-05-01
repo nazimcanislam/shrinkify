@@ -193,7 +193,8 @@ class ShrinkifyApp(tk.Tk):
         self.minsize(860, 640)
         self.configure(bg=COLORS['bg'])
 
-        _icon_path = Path(__file__).parent / 'assets' / 'icon.png'
+        _base = Path(getattr(sys, '_MEIPASS', Path(__file__).parent))
+        _icon_path = _base / 'assets' / 'icon.png'
         if _icon_path.exists():
             try:
                 icon = tk.PhotoImage(file=str(_icon_path))

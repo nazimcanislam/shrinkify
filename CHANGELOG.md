@@ -22,3 +22,9 @@ Initial stable release. Previous pre-release builds (1.0.x) are archived and no 
 - Left-panel scroll in GUI no longer intercepts scroll events outside the panel
 - Removed dead `_FS` variable from `gui.py`
 - `Shrinkify.spec` removed from repository (CI uses inline PyInstaller arguments)
+
+## [0.1.2] — 2025-05-02
+
+### Bug fixes
+- Icon no longer missing when running as a PyInstaller bundle — `gui.py` now resolves `assets/icon.png` via `sys._MEIPASS` instead of `__file__`
+- ffmpeg detection on Windows now searches `winget` install locations (`%LOCALAPPDATA%\Microsoft\WinGet\Packages\Gyan.FFmpeg*`) — previously the app required administrator privileges to find ffmpeg installed via `winget`

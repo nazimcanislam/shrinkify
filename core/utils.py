@@ -38,8 +38,16 @@ def find_binary(name: str) -> str:
 
     # 4. Common Windows installation paths
     if sys.platform == 'win32':
+        localappdata = os.environ.get('LOCALAPPDATA', '')
+
+        # winget installs ffmpeg under a versioned subfolder — glob to avoid hardcoding the version
+        winget_base = Path(localappdata) / 'Microsoft' / 'WinGet' / 'Packages'
+        if winget_base.exists():
+            for candidate in winget_base.glob(f'Gyan.FFmpeg*/**/bin/{name}.exe'):
+                return str(candidate)
+
         win_paths = [
-            Path(os.environ.get('LOCALAPPDATA', '')) / 'Programs' / 'ffmpeg' / 'bin' / f'{name}.exe',
+            Path(localappdata) / 'Programs' / 'ffmpeg' / 'bin' / f'{name}.exe',
             Path('C:/ffmpeg/bin') / f'{name}.exe',
             Path('C:/Program Files/ffmpeg/bin') / f'{name}.exe',
             Path('C:/Program Files (x86)/ffmpeg/bin') / f'{name}.exe',
