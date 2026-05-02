@@ -57,6 +57,14 @@ Uyumlu bir GPU bulunamazsa otomatik olarak CPU kodlamaya geri döner.
 
 Tek dezavantajı, yavaş CPU profillerine kıyasla sıkıştırma verimliliğinin hafifçe düşmesidir. Ancak çoğu kullanım senaryosunda hız ve güç tasarrufu buna değer.
 
+> **CPU mu, GPU mu — ne beklemeli:**
+> Donanım encoder'ları çok daha hızlıdır ancak CPU (libx265) ile kıyaslandığında
+> daha büyük çıktı dosyaları üretir. Testlerimizde 11.000 dosyanın (60 GB)
+> GPU ile dönüştürülmesi yaklaşık 1–2 saat sürdü. Aynı işlem CPU ile çok daha
+> uzun sürerdi. Maksimum sıkıştırma önceliğinizse CPU modunu tercih edin.
+> Büyük koleksiyonları hızlıca işlemek ve yeterince iyi bir sıkıştırmayla
+> yetinmek istiyorsanız GPU modu daha iyi bir seçimdir.
+
 #### 🟥 AMD GPU Hızlandırma
 
 AMD iGPU (Ryzen APU) kullanıcılarında `hevc_amf` encoder `ffmpeg` tarafından listelenebilir ancak driver kısıtlamaları nedeniyle çalışmayabilir. Shrinkify bu durumu otomatik algılar ve CPU tabanlı `libx265` encoding'e geçer. Harici AMD GPU'larda GPU acceleration genel olarak çalışır.

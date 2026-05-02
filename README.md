@@ -57,6 +57,14 @@ If no compatible GPU is found, it silently falls back to CPU encoding.
 
 The trade-off is a slight reduction in compression efficiency compared to slow CPU presets — but for most use cases the speed and power savings are well worth it.
 
+> **CPU vs GPU — what to expect:**
+> Hardware encoders are significantly faster but produce larger output files
+> compared to CPU (libx265). In our tests, converting 11,000 files (60 GB)
+> with GPU took around 1–2 hours. The same job with CPU would take many times
+> longer. If maximum compression is your priority, use CPU mode. If you want
+> to process large collections quickly and are happy with good-enough
+> compression, GPU mode is the better choice.
+
 #### 🟥 AMD GPU Acceleration
 
 On AMD iGPU (Ryzen APU) users, the `hevc_amf` encoder may be listed by `ffmpeg` but may not work due to driver restrictions. Shrinkify automatically detects this and switches to CPU-based `libx265` encoding. GPU acceleration generally works on external AMD GPUs.
