@@ -128,12 +128,20 @@
     <nav>
       <div class="nav-inner">
         <a class="nav-logo" href="#">
-          <img
-            src="assets/favicon_io/favicon-32x32.png"
-            alt="Shrinkify icon"
-            width="32"
-            height="32"
-          />
+          <picture style="display: grid; place-items: center;">
+            <source
+              srcset="assets/favicon_io/favicon-32x32.webp"
+              type="image/webp"
+            />
+
+            <img
+              src="assets/favicon_io/favicon-32x32.png"
+              alt="Shrinkify icon"
+              width="32"
+              height="32"
+              loading="eager"
+            />
+          </picture>
           <span translate="no">Shrinkify</span>
         </a>
         <div class="nav-links">
@@ -187,7 +195,7 @@
               src="https://img.shields.io/github/stars/nazimcanislam/shrinkify?style=social&cacheSeconds=604800&color=green&logo=github"
               alt="GitHub Stars"
               height="20"
-              style="max-width: 120px;"
+              style="max-width: 120px"
             />
           </div>
           <div class="demo-ticker">
@@ -780,12 +788,20 @@
       <div class="footer-inner">
         <div>
           <div class="footer-brand">
-            <img
-              src="assets/favicon_io/favicon-32x32.png"
-              alt="Shrinkify icon"
-              width="32"
-              height="32"
-            />
+            <picture style="display: grid; place-items: center;">
+              <source
+                srcset="assets/favicon_io/favicon-32x32.webp"
+                type="image/webp"
+              />
+
+              <img
+                src="assets/favicon_io/favicon-32x32.png"
+                alt="Shrinkify icon"
+                width="32"
+                height="32"
+                loading="lazy"
+              />
+            </picture>
             <span translate="no">Shrinkify</span>
           </div>
           <p class="footer-desc" data-i18n="footer_desc">
