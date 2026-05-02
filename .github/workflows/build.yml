@@ -75,6 +75,11 @@ jobs:
             --collect-all pillow_heif \
             --add-data "assets/icon.png:."
 
+      - name: Inject LSEnvironment into Info.plist
+        run: |
+          /usr/libexec/PlistBuddy -c "Add :LSEnvironment dict" dist/Shrinkify.app/Contents/Info.plist
+          /usr/libexec/PlistBuddy -c "Add :LSEnvironment:PATH string /opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin" dist/Shrinkify.app/Contents/Info.plist
+
       - name: Zip the .app bundle
         run: |
           cd dist
