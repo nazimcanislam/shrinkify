@@ -57,6 +57,10 @@ If no compatible GPU is found, it silently falls back to CPU encoding.
 
 The trade-off is a slight reduction in compression efficiency compared to slow CPU presets — but for most use cases the speed and power savings are well worth it.
 
+#### 🟥 AMD GPU Acceleration
+
+On AMD iGPU (Ryzen APU) users, the `hevc_amf` encoder may be listed by `ffmpeg` but may not work due to driver restrictions. Shrinkify automatically detects this and switches to CPU-based `libx265` encoding. GPU acceleration generally works on external AMD GPUs.
+
 ---
 
 ## 📋 Requirements

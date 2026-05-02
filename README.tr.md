@@ -57,6 +57,10 @@ Uyumlu bir GPU bulunamazsa otomatik olarak CPU kodlamaya geri döner.
 
 Tek dezavantajı, yavaş CPU profillerine kıyasla sıkıştırma verimliliğinin hafifçe düşmesidir. Ancak çoğu kullanım senaryosunda hız ve güç tasarrufu buna değer.
 
+#### 🟥 AMD GPU Hızlandırma
+
+AMD iGPU (Ryzen APU) kullanıcılarında `hevc_amf` encoder `ffmpeg` tarafından listelenebilir ancak driver kısıtlamaları nedeniyle çalışmayabilir. Shrinkify bu durumu otomatik algılar ve CPU tabanlı `libx265` encoding'e geçer. Harici AMD GPU'larda GPU acceleration genel olarak çalışır.
+
 ---
 
 ## 📋 Gereksinimler

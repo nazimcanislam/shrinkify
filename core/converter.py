@@ -26,6 +26,44 @@ from core.analyzer import QUALITY_PRESETS, DEFAULT_PRESET
 
 # ── Hardware encoder detection ────────────────────────────────
 
+def _probe_encoder(encoder: str) -> bool:
+    """
+    Actually tests whether an encoder works by running a short null encode.
+    Returns True only if ffmpeg exits cleanly without errors.
+
+    This catches cases where an encoder is listed in '-encoders' but fails at
+    runtime (e.g. hevc_amf on AMD iGPU systems with driver/permission issues).
+
+    Encoder-specific notes:
+    - hevc_nvenc     : requires yuv420p (CUDA surface); nullsrc fails
+    - hevc_qsv       : tolerant, yuv420p works fine
+    - hevc_amf       : yuv420p works; may fail at D3D11 init on iGPUs
+    - hevc_videotoolbox : requires explicit -color_range tv; without it
+                          VideoToolbox raises "Color range not set" and exits 1
+    """
+    base_cmd = [
+        FFMPEG, '-loglevel', 'error',
+        '-f', 'lavfi', '-i', 'color=black:s=256x256:r=1',
+        '-vframes', '1',
+    ]
+
+    # VideoToolbox refuses to encode without an explicit colour range
+    if encoder == 'hevc_videotoolbox':
+        base_cmd += ['-color_range', 'tv']
+
+    base_cmd += ['-c:v', encoder, '-f', 'null', '-']
+
+    try:
+        result = subprocess.run(
+            base_cmd,
+            capture_output=True, encoding='utf-8', errors='replace', timeout=15,
+            **no_window()
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
 def detect_hw_encoder() -> str | None:
     """
     Returns the best available hardware HEVC encoder for this machine, or None.
@@ -36,6 +74,11 @@ def detect_hw_encoder() -> str | None:
       Intel  → hevc_qsv           (Intel Quick Sync, Windows / Linux)
       AMD    → hevc_amf           (AMD, Windows)
       None   → software libx265
+
+    Each candidate is first checked against '-encoders' output (fast), then
+    probed with a real null encode to confirm it actually works at runtime.
+    This prevents silent failures on systems where an encoder is listed but
+    cannot be initialised (e.g. hevc_amf on AMD iGPU with driver restrictions).
     """
     try:
         result = subprocess.run(
@@ -54,7 +97,7 @@ def detect_hw_encoder() -> str | None:
         ('hevc_amf',          True),
     ]
     for encoder, ok in candidates:
-        if ok and encoder in output:
+        if ok and encoder in output and _probe_encoder(encoder):
             return encoder
     return None
 
