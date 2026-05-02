@@ -33,7 +33,7 @@
       rel="icon"
       type="image/png"
       sizes="512x512"
-      href="assets/favicon_io/favicon-512x512.png"
+      href="assets/favicon_io/android-chrome-512x512.png"
     />
     <link
       rel="apple-touch-icon"
@@ -92,14 +92,47 @@
     <link rel="canonical" href="https://nazimcanislam.github.io/shrinkify/" />
 
     <link rel="stylesheet" href="assets/style.css" />
+    <script src="assets/i18n/translations-load.js" defer></script>
+
+    <!-- Inline lang detection: runs synchronously before any content renders.
+       Sets html[lang] immediately and hides the page if a non-English language
+       is preferred, preventing the "language flash" on first load. -->
+    <script>
+      (function () {
+        let saved = localStorage.getItem("shrinkify-lang");
+        let browser = (navigator.language || "").startsWith("tr");
+        let lang = saved || (browser ? "tr" : "en");
+        document.documentElement.lang = lang;
+        window.__SHRINKIFY_LANG = lang;
+        if (lang !== "en") {
+          // Hide page until translations are applied to prevent flash
+          document.documentElement.style.visibility = "hidden";
+          // Safety fallback: always reveal after 3 seconds even if something fails
+          setTimeout(function () {
+            document.documentElement.style.visibility = "";
+          }, 3000);
+          // Preload the needed translation file so the fetch is warm when JS runs.
+          // crossOrigin="anonymous" (credentials: omit) must match the fetch()
+          // credentials option in translations-load.js to avoid a cache mismatch.
+          let link = document.createElement("link");
+          link.rel = "preload";
+          link.as = "fetch";
+          link.crossOrigin = "anonymous";
+          link.href = "assets/i18n/locales/translation." + lang + ".json";
+          document.head.appendChild(link);
+        }
+      })();
+    </script>
   </head>
   <body>
     <nav>
       <div class="nav-inner">
         <a class="nav-logo" href="#">
           <img
-            src="assets/favicon_io/android-chrome-512x512.png"
+            src="assets/favicon_io/favicon-32x32.png"
             alt="Shrinkify icon"
+            width="32"
+            height="32"
           />
           <span translate="no">Shrinkify</span>
         </a>
@@ -109,7 +142,7 @@
           <a href="https://github.com/nazimcanislam/shrinkify" target="_blank"
             >GitHub</a
           >
-          <button class="lang-switcher" id="lang-btn" onclick="toggleLang()">
+          <button class="lang-switcher" id="lang-btn" aria-label="🇹🇷 TR">
             🇹🇷 TR
           </button>
           <a href="#download" class="nav-cta" data-i18n="nav_download"
@@ -149,10 +182,12 @@
               >View on GitHub</a
             >
           </div>
-          <div class="hero-stars">
+          <div>
             <img
-              src="https://img.shields.io/github/stars/nazimcanislam/shrinkify?style=social&cacheSeconds=3600&color=green&logo=github"
+              src="https://img.shields.io/github/stars/nazimcanislam/shrinkify?style=social&cacheSeconds=604800&color=green&logo=github"
               alt="GitHub Stars"
+              height="20"
+              style="max-width: 120px;"
             />
           </div>
           <div class="demo-ticker">
@@ -572,7 +607,6 @@
             <button
               class="tab-btn active"
               data-tab="folder"
-              aria-hidden="true"
               data-i18n="guide_tab_folder"
             >
               🗂️ Folder Mode
@@ -580,7 +614,6 @@
             <button
               class="tab-btn"
               data-tab="single"
-              aria-hidden="true"
               data-i18n="guide_tab_single"
             >
               📄 Single File Mode
@@ -748,8 +781,10 @@
         <div>
           <div class="footer-brand">
             <img
-              src="assets/favicon_io/android-chrome-512x512.png"
+              src="assets/favicon_io/favicon-32x32.png"
               alt="Shrinkify icon"
+              width="32"
+              height="32"
             />
             <span translate="no">Shrinkify</span>
           </div>
@@ -801,6 +836,7 @@
       </div>
     </footer>
 
-    <script src="assets/script.js"></script>
+    <script src="assets/i18n/translations-apply.js" defer></script>
+    <script src="assets/script.js" defer></script>
   </body>
 </html>
