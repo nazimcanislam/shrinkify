@@ -2,6 +2,26 @@
 
 All notable changes to Shrinkify are documented here.
 
+## [0.1.3] — 2026-05-02
+
+### Bug fixes
+- GPU encoder detection now probes each candidate with a real null encode before
+  selecting it — previously, `detect_hw_encoder()` only checked `ffmpeg -encoders`
+  output, which caused `hevc_amf` to be selected on AMD iGPU systems even when the
+  driver rejected it at runtime ("Operation not permitted")
+- Probe resolution raised from 128×128 to 256×256 — NVENC enforces a minimum frame
+  dimension at the hardware level and silently failed the probe, causing `hevc_qsv`
+  to be selected instead on systems with both NVIDIA and Intel GPUs
+- `hevc_videotoolbox` probe now passes `-color_range tv` explicitly — VideoToolbox
+  exits with an error when colour range is unset, causing the encoder to be
+  incorrectly marked as unavailable on macOS
+
+### Improvements
+- Hardware encoder probe is now verified across all four supported platforms:
+  NVIDIA (NVENC), Intel (QSV), AMD (AMF), Apple Silicon (VideoToolbox)
+- README and README.tr.md: added CPU vs GPU tradeoff note with real-world benchmark
+  data (11,000 files / 60 GB) under the GPU Acceleration section
+
 ## [0.1.1] — 2025-05-02
 
 Initial stable release. Previous pre-release builds (1.0.x) are archived and no longer distributed.
