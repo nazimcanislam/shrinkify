@@ -5,6 +5,7 @@
 
   ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
   ![ffmpeg](https://img.shields.io/badge/ffmpeg-required-007808?logo=ffmpeg&logoColor=white)
+  ![exiftool](https://img.shields.io/badge/exiftool-required-4a90d9?logoColor=white)
   ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
   ![License](https://img.shields.io/badge/license-MIT-blue)
 
@@ -16,13 +17,13 @@
 ## ✨ Features
 
 - 📊 **Smart Analysis** — ffprobe extracts codec, bitrate, resolution, and format for every file
-- 🔄 **Conversion** — H.264 → H.265 (ffmpeg), JPEG → HEIF (pillow-heif)
+- 🔄 **Conversion** — H.264 → H.265 (ffmpeg), JPEG → AVIF (ffmpeg + exiftool)
 - 🎚️ **Quality Presets** — Maximum Shrink / Balanced / Conservative
 - 📁 **Complete Output** — optionally copies unconverted files too, so the output folder is self-contained
 - 🔁 **Duplicate Detection** — hash-based detection and deletion
 - 📄 **HTML Report** — estimated savings, codec distribution charts, per-file tables
 - 🖥️ **CLI + GUI** — terminal and tkinter desktop interface
-- 🔒 **Metadata Preserved** — EXIF and video metadata are kept after conversion
+- 🔒 **Metadata Preserved** — all EXIF metadata (GPS, capture date, camera model, orientation) is fully copied to output files via exiftool
 - ⚠️ **Error Resilient** — files that fail to scan are logged and skipped gracefully
 
 > 🎵 **Note:** Shrinkify focuses on photos and videos only. Audio files (MP3, FLAC, AAC, etc.) are not analyzed or converted — that's a separate concern better handled by a dedicated tool.
@@ -74,14 +75,8 @@ On AMD iGPU (Ryzen APU) users, the `hevc_amf` encoder may be listed by `ffmpeg` 
 ## 📋 Requirements
 
 - Python 3.10+
-- ffmpeg + ffprobe (for video conversion and analysis)
-- pillow + pillow-heif (for image conversion)
-
-### Install Python dependencies
-
-```bash
-pip install pillow pillow-heif
-```
+- ffmpeg + ffprobe (video and image conversion, analysis)
+- exiftool (metadata preservation for image conversion)
 
 ### Install ffmpeg
 
@@ -122,6 +117,41 @@ brew install ffmpeg
 ```bash
 sudo apt install ffmpeg      # Debian / Ubuntu
 sudo dnf install ffmpeg      # Fedora
+```
+
+### Install exiftool
+
+exiftool is required for image conversion. Without it, image conversion is blocked at startup (no CPU is wasted on a conversion that would lose metadata).
+
+**Windows (recommended: WinGet)**
+
+```powershell
+winget install OliverBetz.ExifTool
+```
+
+Restart your terminal after installing, then verify:
+
+```powershell
+exiftool -ver
+```
+
+**Windows (standalone — no install needed)**
+
+1. Download the Windows Executable from [exiftool.org](https://exiftool.org)
+2. Rename `exiftool(-k).exe` to `exiftool.exe`
+3. Place it next to `gui.py` (project root) — Shrinkify will find it automatically
+
+**macOS**
+
+```bash
+brew install exiftool
+```
+
+**Linux**
+
+```bash
+sudo apt install libimage-exiftool-perl   # Debian / Ubuntu
+sudo dnf install perl-Image-ExifTool      # Fedora
 ```
 
 ---
@@ -186,11 +216,11 @@ python cli.py "C:\Videos" --convert --hw-accel
 
 ## 🎚️ Quality Presets
 
-| Preset | Video CRF | Image Quality | Description |
+| Preset | Video CRF | Image CRF | Description |
 |---|---|---|---|
-| `max` | 28 | 60 | Smallest files. Slight quality reduction, unlikely to be noticeable. |
-| `balanced` | 24 | 72 | Best trade-off. Recommended default. |
-| `conservative` | 20 | 82 | Minimal quality loss. Larger files, safer for archival. |
+| `max` | 28 | 38 | Smallest files. Slight quality reduction, unlikely to be noticeable. |
+| `balanced` | 24 | 27 | Best trade-off. Recommended default. |
+| `conservative` | 20 | 18 | Minimal quality loss. Larger files, safer for archival. |
 
 ---
 
@@ -203,7 +233,7 @@ C:\Takeout\
 ├── photo.jpg            ← original, untouched
 ├── video.mp4            ← original, untouched
 └── shrinkified\
-    ├── photo.heic       ← converted
+    ├── photo.avif       ← converted (AVIF, all metadata preserved)
     └── video.mp4        ← converted (H.265)
 ```
 
@@ -217,9 +247,9 @@ With **"Copy originals"** enabled, unconverted files are also copied into `shrin
 |---|---|---|---|
 | H.264 (AVC) video | H.265 (HEVC) | ffmpeg | ~55% |
 | MPEG-4, MPEG-2 video | H.265 (HEVC) | ffmpeg | ~55% |
-| JPEG photo | HEIF | pillow-heif | ~30–40% |
+| JPEG photo | AVIF | ffmpeg + exiftool | ~30–40% |
 | HEVC, AV1 video | — | — | Not touched |
-| HEIF photo | — | — | Not touched |
+| AVIF, HEIF photo | — | — | Not touched |
 | Low-bitrate video (<3 Mbps) | — | — | Skipped (already lean) |
 
 ---
@@ -253,7 +283,7 @@ pyinstaller --onefile --name=Shrinkify gui.py
 
 The executable will be in the `dist/` folder.
 
-> 📌 `pillow` and `pillow-heif` are bundled automatically. ffmpeg/ffprobe are **not** bundled — users must install them separately and ensure they are in PATH. For a fully self-contained build, copy the ffmpeg binaries next to the `.exe` and update the PATH logic in `scanner.py` / `converter.py` to check the local directory first.
+> 📌 ffmpeg, ffprobe, and exiftool are **not** bundled — users must install them separately. For a fully self-contained build, copy all three binaries next to the `.exe`. Shrinkify automatically searches the directory containing the executable before falling back to PATH.
 
 ---
 
@@ -264,20 +294,19 @@ shrinkify/
 ├── .github/workflows/
 ├── assets/
 │   ├── icon.ico
-│   ├── icon.png
-│   └── favicon/
+│   └── icon.png
 ├── core/
 │   ├── scanner.py      # ffprobe analysis + hash/duplicate detection
 │   ├── analyzer.py     # conversion decision logic + quality presets
-│   ├── converter.py    # ffmpeg (video) + pillow-heif (image) conversion
-│   └── reporter.py     # HTML + terminal report
+│   ├── converter.py    # ffmpeg + exiftool conversion pipeline
+│   ├── reporter.py     # HTML + terminal report
+│   └── utils.py        # binary resolution, subprocess helpers
 ├── docs/
 │   └── index.html      # GitHub Pages deployment
 ├── cli.py              # Command-line interface
 ├── gui.py              # tkinter GUI
 ├── version.py
-├── shrinkify.iss
-├── Shrinkify.spec
+├── CHANGELOG.md
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -285,31 +314,31 @@ shrinkify/
 
 ---
 
-## 📺 HEIF & HEVC Compatibility
+## 🖼️ AVIF & HEVC Compatibility
 
 Before converting your entire library, check whether your devices can open the output files.
 
 ### Well-supported ✅
 
-| Platform | HEIF photos | H.265 video |
+| Platform | AVIF photos | H.265 video |
 |---|---|---|
-| Windows 10 / 11 | ✅ (requires free [HEVC Video Extensions](https://apps.microsoft.com/detail/9nmzlz57r3t7)) | ✅ same extension |
-| macOS High Sierra (10.13)+ | ✅ native | ✅ native |
-| iOS 11+ | ✅ native | ✅ native |
-| Android 9+ | ✅ most devices | ✅ most devices |
-| Modern Smart TVs (2018+) | ✅ most | ✅ most |
+| Windows 10 / 11 | ✅ native (Photos app, Edge) | ✅ (requires free [HEVC Video Extensions](https://apps.microsoft.com/detail/9nmzlz57r3t7)) |
+| macOS Ventura (13)+ | ✅ native | ✅ native |
+| iOS 16+ | ✅ native | ✅ native |
+| Android 10+ | ✅ native | ✅ most devices |
+| Modern browsers (Chrome, Firefox, Safari) | ✅ | ✅ |
 | VLC (all platforms) | ✅ | ✅ |
 
 ### May have issues ⚠️
 
 | Platform | Notes |
 |---|---|
-| Windows 7 / 8 / 8.1 | No native HEIF or H.265 support. VLC can still play the videos. |
-| Android 8 and older | Inconsistent — depends on manufacturer and hardware decoder |
-| Old Smart TVs (pre-2018) | Often no H.265 hardware decoder |
-| Some older digital photo frames | HEIF not supported |
+| Windows 7 / 8 / 8.1 | No native H.265 support; AVIF requires a modern viewer |
+| Android 9 and older | Inconsistent — depends on manufacturer and hardware decoder |
+| Old Smart TVs (pre-2018) | Often no H.265 hardware decoder; AVIF unlikely to be supported |
+| Some older digital photo frames | AVIF not supported |
 
-> 💡 If you share files with people on older devices, keep the originals or use the **Conservative** preset. For personal archival use on modern devices (2018+), converting is safe.
+> 💡 AVIF is royalty-free and supported natively on all major modern platforms. If you share files with people on older devices, keep the originals or use the **Conservative** preset. For personal archival use on modern devices (2019+), converting is safe.
 
 ---
 

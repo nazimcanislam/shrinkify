@@ -5,6 +5,7 @@
 
   ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
   ![ffmpeg](https://img.shields.io/badge/ffmpeg-gerekli-007808?logo=ffmpeg&logoColor=white)
+  ![exiftool](https://img.shields.io/badge/exiftool-gerekli-4a90d9?logoColor=white)
   ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
   ![Lisans](https://img.shields.io/badge/lisans-MIT-blue)
 
@@ -16,13 +17,13 @@
 ## ✨ Özellikler
 
 - 📊 **Akıllı Analiz** — ffprobe her dosya için codec, bit hızı, çözünürlük ve format bilgisini çıkarır
-- 🔄 **Dönüştürme** — H.264 → H.265 (ffmpeg), JPEG → HEIF (pillow-heif)
+- 🔄 **Dönüştürme** — H.264 → H.265 (ffmpeg), JPEG → AVIF (ffmpeg + exiftool)
 - 🎚️ **Kalite Profilleri** — Maksimum Küçültme / Dengeli / Koruyucu
 - 📁 **Eksiksiz Çıktı** — dönüştürülmemiş dosyaları da kopyalar; çıktı klasörü tamamen bağımsız olur
 - 🔁 **Kopya Tespiti** — hash tabanlı tespit ve silme
 - 📄 **HTML Raporu** — tahmini tasarruf, codec dağılım grafikleri, dosya başına tablolar
 - 🖥️ **CLI + GUI** — terminal ve tkinter masaüstü arayüzü
-- 🔒 **Metadata Korunur** — dönüştürme sonrası EXIF ve video metadata'sı saklanır
+- 🔒 **Metadata Korunur** — tüm EXIF meta verileri (GPS, çekim tarihi, kamera modeli, yönelim) exiftool aracılığıyla eksiksiz kopyalanır
 - ⚠️ **Hata Dayanıklı** — taranamayan dosyalar loglanır ve atlanır
 
 > 🎵 **Not:** Shrinkify yalnızca fotoğraf ve videolara odaklanır. Ses dosyaları (MP3, FLAC, AAC vb.) analiz edilmez veya dönüştürülmez — bu, daha iyi ayrı bir araçla ele alınacak bağımsız bir konudur.
@@ -74,14 +75,8 @@ AMD iGPU (Ryzen APU) kullanıcılarında `hevc_amf` encoder `ffmpeg` tarafından
 ## 📋 Gereksinimler
 
 - Python 3.10+
-- ffmpeg + ffprobe (video dönüştürme ve analiz için)
-- pillow + pillow-heif (görüntü dönüştürme için)
-
-### Python bağımlılıklarını yükle
-
-```bash
-pip install pillow pillow-heif
-```
+- ffmpeg + ffprobe (video ve görüntü dönüştürme, analiz için)
+- exiftool (görüntü dönüştürmede metadata koruması için)
 
 ### ffmpeg kurulumu
 
@@ -122,6 +117,41 @@ brew install ffmpeg
 ```bash
 sudo apt install ffmpeg      # Debian / Ubuntu
 sudo dnf install ffmpeg      # Fedora
+```
+
+### exiftool kurulumu
+
+exiftool, görüntü dönüştürme için zorunludur. Kurulu değilse, görüntü dönüştürme başlamadan önce engellenir — metadata kaybetmemek için ffmpeg hiç çalıştırılmaz.
+
+**Windows (önerilen: WinGet)**
+
+```powershell
+winget install OliverBetz.ExifTool
+```
+
+Kurulumun ardından terminalinizi yeniden başlatın, ardından doğrulayın:
+
+```powershell
+exiftool -ver
+```
+
+**Windows (standalone — kurulum gerektirmez)**
+
+1. [exiftool.org](https://exiftool.org) adresinden Windows Executable'ı indirin
+2. `exiftool(-k).exe` dosyasını `exiftool.exe` olarak yeniden adlandırın
+3. `gui.py`'nin yanına (proje kök dizinine) yerleştirin — Shrinkify otomatik olarak bulur
+
+**macOS**
+
+```bash
+brew install exiftool
+```
+
+**Linux**
+
+```bash
+sudo apt install libimage-exiftool-perl   # Debian / Ubuntu
+sudo dnf install perl-Image-ExifTool      # Fedora
 ```
 
 ---
@@ -186,11 +216,11 @@ python cli.py "C:\Videolar" --convert --hw-accel
 
 ## 🎚️ Kalite Profilleri
 
-| Profil | Video CRF | Görüntü Kalitesi | Açıklama |
+| Profil | Video CRF | Görüntü CRF | Açıklama |
 |---|---|---|---|
-| `max` | 28 | 60 | En küçük dosyalar. Hafif kalite düşüşü, genellikle fark edilmez. |
-| `balanced` | 24 | 72 | En iyi denge. Varsayılan olarak önerilir. |
-| `conservative` | 20 | 82 | Minimum kalite kaybı. Daha büyük dosyalar, arşivleme için daha güvenli. |
+| `max` | 28 | 38 | En küçük dosyalar. Hafif kalite düşüşü, genellikle fark edilmez. |
+| `balanced` | 24 | 27 | En iyi denge. Varsayılan olarak önerilir. |
+| `conservative` | 20 | 18 | Minimum kalite kaybı. Daha büyük dosyalar, arşivleme için daha güvenli. |
 
 ---
 
@@ -203,7 +233,7 @@ C:\Takeout\
 ├── photo.jpg            ← orijinal, dokunulmadı
 ├── video.mp4            ← orijinal, dokunulmadı
 └── shrinkified\
-    ├── photo.heic       ← dönüştürüldü
+    ├── photo.avif       ← dönüştürüldü (AVIF, tüm metadata korundu)
     └── video.mp4        ← dönüştürüldü (H.265)
 ```
 
@@ -217,9 +247,9 @@ C:\Takeout\
 |---|---|---|---|
 | H.264 (AVC) video | H.265 (HEVC) | ffmpeg | ~%55 |
 | MPEG-4, MPEG-2 video | H.265 (HEVC) | ffmpeg | ~%55 |
-| JPEG fotoğraf | HEIF | pillow-heif | ~%30–40 |
+| JPEG fotoğraf | AVIF | ffmpeg + exiftool | ~%30–40 |
 | HEVC, AV1 video | — | — | Dokunulmaz |
-| HEIF fotoğraf | — | — | Dokunulmaz |
+| AVIF, HEIF fotoğraf | — | — | Dokunulmaz |
 | Düşük bit hızlı video (<3 Mbps) | — | — | Atlanır (zaten küçük) |
 
 ---
@@ -238,12 +268,12 @@ pip install pyinstaller
 
 **Windows**
 ```bash
-pyinstaller --onefile --windowed --icon=icon.ico --name=Shrinkify gui.py
+pyinstaller --onefile --windowed --icon=assets/icon.ico --name=Shrinkify gui.py
 ```
 
 **macOS**
 ```bash
-pyinstaller --onefile --windowed --icon=icon.png --name=Shrinkify gui.py
+pyinstaller --onefile --windowed --icon=assets/icon.png --name=Shrinkify gui.py
 ```
 
 **Linux**
@@ -253,7 +283,7 @@ pyinstaller --onefile --name=Shrinkify gui.py
 
 Çalıştırılabilir dosya `dist/` klasöründe olacaktır.
 
-> 📌 `pillow` ve `pillow-heif` PyInstaller tarafından otomatik olarak paketlenir. ffmpeg/ffprobe **pakete dahil edilmez** — kullanıcıların bunları ayrıca kurması ve PATH'de bulunduğundan emin olması gerekir. Tamamen bağımsız bir derleme için ffmpeg ikili dosyalarını `.exe`'nin yanına kopyalayın ve `scanner.py` / `converter.py` içindeki PATH mantığını önce yerel dizini kontrol edecek şekilde güncelleyin.
+> 📌 ffmpeg, ffprobe ve exiftool **pakete dahil edilmez** — kullanıcıların bunları ayrıca kurması gerekir. Tamamen bağımsız bir derleme için üç ikili dosyayı da `.exe`'nin yanına kopyalayın. Shrinkify, PATH'e başvurmadan önce çalıştırılabilir dosyanın bulunduğu dizini otomatik olarak arar.
 
 ---
 
@@ -264,20 +294,19 @@ shrinkify/
 ├── .github/workflows/
 ├── assets/
 │   ├── icon.ico
-│   ├── icon.png
-│   └── favicon/
+│   └── icon.png
 ├── core/
 │   ├── scanner.py      # ffprobe analizi + hash/kopya tespiti
 │   ├── analyzer.py     # dönüştürme karar mantığı + kalite profilleri
-│   ├── converter.py    # ffmpeg (video) + pillow-heif (görüntü) dönüştürme
-│   └── reporter.py     # HTML + terminal raporu
+│   ├── converter.py    # ffmpeg + exiftool dönüştürme pipeline'ı
+│   ├── reporter.py     # HTML + terminal raporu
+│   └── utils.py        # binary çözümleme, subprocess yardımcıları
 ├── docs/
 │   └── index.html      # GitHub Pages kurulumu
 ├── cli.py              # Command-line interface
 ├── gui.py              # tkinter GUI
 ├── version.py
-├── shrinkify.iss
-├── Shrinkify.spec
+├── CHANGELOG.md
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -285,31 +314,31 @@ shrinkify/
 
 ---
 
-## 📺 HEIF & HEVC Uyumluluğu
+## 🖼️ AVIF & HEVC Uyumluluğu
 
 Tüm kütüphanenizi dönüştürmeden önce cihazlarınızın çıktı dosyalarını açıp açamadığını kontrol edin.
 
 ### İyi desteklenen ✅
 
-| Platform | HEIF fotoğraflar | H.265 video |
+| Platform | AVIF fotoğraflar | H.265 video |
 |---|---|---|
-| Windows 10 / 11 | ✅ (ücretsiz [HEVC Video Uzantıları](https://apps.microsoft.com/detail/9nmzlz57r3t7) gerektirir) | ✅ aynı uzantı |
-| macOS High Sierra (10.13)+ | ✅ yerel | ✅ yerel |
-| iOS 11+ | ✅ yerel | ✅ yerel |
-| Android 9+ | ✅ çoğu cihaz | ✅ çoğu cihaz |
-| Modern Akıllı TV'ler (2018+) | ✅ çoğu | ✅ çoğu |
+| Windows 10 / 11 | ✅ yerel (Fotoğraflar uygulaması, Edge) | ✅ (ücretsiz [HEVC Video Uzantıları](https://apps.microsoft.com/detail/9nmzlz57r3t7) gerektirir) |
+| macOS Ventura (13)+ | ✅ yerel | ✅ yerel |
+| iOS 16+ | ✅ yerel | ✅ yerel |
+| Android 10+ | ✅ yerel | ✅ çoğu cihaz |
+| Modern tarayıcılar (Chrome, Firefox, Safari) | ✅ | ✅ |
 | VLC (tüm platformlar) | ✅ | ✅ |
 
 ### Sorun yaşanabilecek durumlar ⚠️
 
 | Platform | Notlar |
 |---|---|
-| Windows 7 / 8 / 8.1 | Yerel HEIF veya H.265 desteği yok. VLC videoları oynatabilir. |
-| Android 8 ve öncesi | Tutarsız — üreticiye ve donanım dekoder'a bağlı |
-| Eski Akıllı TV'ler (2018 öncesi) | Genellikle H.265 donanım dekoder'ı yok |
-| Bazı eski dijital fotoğraf çerçeveleri | HEIF desteklenmez |
+| Windows 7 / 8 / 8.1 | H.265 için yerel destek yok; AVIF modern bir görüntüleyici gerektirir |
+| Android 9 ve öncesi | Tutarsız — üreticiye ve donanım dekoder'a bağlı |
+| Eski Akıllı TV'ler (2018 öncesi) | Genellikle H.265 donanım dekoder'ı yok; AVIF desteği muhtemelen yok |
+| Bazı eski dijital fotoğraf çerçeveleri | AVIF desteklenmez |
 
-> 💡 Dosyaları eski cihaz kullanan kişilerle paylaşıyorsanız, orijinalleri saklayın veya **Koruyucu** profilini kullanın. 2018 ve sonrası modern cihazlarda kişisel arşivleme için dönüştürme güvenlidir.
+> 💡 AVIF telif ücreti olmayan, tüm modern büyük platformlarda yerel olarak desteklenen bir formattır. Dosyaları eski cihaz kullanan kişilerle paylaşıyorsanız, orijinalleri saklayın veya **Koruyucu** profilini kullanın. 2019 ve sonrası modern cihazlarda kişisel arşivleme için dönüştürme güvenlidir.
 
 ---
 

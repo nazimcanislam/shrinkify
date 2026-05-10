@@ -1,8 +1,11 @@
 """
 converter.py — Conversion logic.
 
-Images  → pillow-heif
-Videos  → ffmpeg with auto-detected hardware encoder
+Images  -> ffmpeg (AVIF) + exiftool for metadata preservation
+Videos  -> ffmpeg with auto-detected hardware encoder
+
+Image conversion requires exiftool. If exiftool is not found at startup,
+image conversion will fail-fast before running ffmpeg (no wasted CPU time).
 """
 
 import shutil
@@ -11,46 +14,27 @@ import sys
 from pathlib import Path
 from dataclasses import dataclass
 
-try:
-    import pillow_heif as _pillow_heif
-    from PIL import Image as _PILImage
-    _pillow_heif.register_heif_opener()
-    _PILLOW_HEIF_OK = True
-except ImportError:
-    _PILLOW_HEIF_OK = False
-
-from core.utils import FFMPEG, no_window
+from core.utils import FFMPEG, EXIFTOOL, EXIFTOOL_AVAILABLE, no_window
 from core.scanner import MediaFile
 from core.analyzer import QUALITY_PRESETS, DEFAULT_PRESET
 
 
-# ── Hardware encoder detection ────────────────────────────────
+# ---------------------------------------------------------------------------
+# Hardware encoder detection
+# ---------------------------------------------------------------------------
 
 def _probe_encoder(encoder: str) -> bool:
     """
-    Actually tests whether an encoder works by running a short null encode.
+    Tests whether an encoder works by running a short null encode.
     Returns True only if ffmpeg exits cleanly without errors.
-
-    This catches cases where an encoder is listed in '-encoders' but fails at
-    runtime (e.g. hevc_amf on AMD iGPU systems with driver/permission issues).
-
-    Encoder-specific notes:
-    - hevc_nvenc     : requires yuv420p (CUDA surface); nullsrc fails
-    - hevc_qsv       : tolerant, yuv420p works fine
-    - hevc_amf       : yuv420p works; may fail at D3D11 init on iGPUs
-    - hevc_videotoolbox : requires explicit -color_range tv; without it
-                          VideoToolbox raises "Color range not set" and exits 1
     """
     base_cmd = [
         FFMPEG, '-loglevel', 'error',
         '-f', 'lavfi', '-i', 'color=black:s=256x256:r=1',
         '-vframes', '1',
     ]
-
-    # VideoToolbox refuses to encode without an explicit colour range
     if encoder == 'hevc_videotoolbox':
         base_cmd += ['-color_range', 'tv']
-
     base_cmd += ['-c:v', encoder, '-f', 'null', '-']
 
     try:
@@ -66,19 +50,8 @@ def _probe_encoder(encoder: str) -> bool:
 
 def detect_hw_encoder() -> str | None:
     """
-    Returns the best available hardware HEVC encoder for this machine, or None.
-
-    Priority:
-      macOS  → hevc_videotoolbox  (Apple Silicon + Intel via VideoToolbox)
-      NVIDIA → hevc_nvenc         (Windows / Linux)
-      Intel  → hevc_qsv           (Intel Quick Sync, Windows / Linux)
-      AMD    → hevc_amf           (AMD, Windows)
-      None   → software libx265
-
-    Each candidate is first checked against '-encoders' output (fast), then
-    probed with a real null encode to confirm it actually works at runtime.
-    This prevents silent failures on systems where an encoder is listed but
-    cannot be initialised (e.g. hevc_amf on AMD iGPU with driver restrictions).
+    Returns the best available hardware HEVC encoder, or None.
+    Priority: macOS VideoToolbox -> NVIDIA NVENC -> Intel QSV -> AMD AMF
     """
     try:
         result = subprocess.run(
@@ -112,7 +85,9 @@ def get_hw_encoder() -> str | None:
     return _HW_ENCODER_CACHE
 
 
-# ── Data classes ──────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# Data classes
+# ---------------------------------------------------------------------------
 
 @dataclass
 class ConversionResult:
@@ -131,11 +106,12 @@ class ConversionResult:
 
     @property
     def skipped_due_to_size(self) -> bool:
-        """True if this file was attempted but output was larger than original."""
         return self.skipped and 'larger' in self.skip_reason
 
 
-# ── Path helpers ──────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# Path helpers
+# ---------------------------------------------------------------------------
 
 def get_output_path(
     mf: MediaFile,
@@ -143,7 +119,7 @@ def get_output_path(
     scan_root: Path | None = None,
     preserve_structure: bool = False,
 ) -> Path:
-    new_name = (mf.path.stem + '.mp4') if mf.media_type == 'video' else (mf.path.stem + '.heic')
+    new_name = (mf.path.stem + '.mp4') if mf.media_type == 'video' else (mf.path.stem + '.avif')
     if preserve_structure and scan_root is not None:
         try:
             rel = mf.path.parent.relative_to(scan_root)
@@ -153,7 +129,9 @@ def get_output_path(
     return shrinkified_dir / new_name
 
 
-# ── ffmpeg command builders ───────────────────────────────────
+# ---------------------------------------------------------------------------
+# ffmpeg command builders
+# ---------------------------------------------------------------------------
 
 def _video_crf(preset: str) -> int:
     return {'max': 28, 'balanced': 24, 'conservative': 20}.get(preset, 24)
@@ -161,6 +139,11 @@ def _video_crf(preset: str) -> int:
 
 def _image_quality(preset: str) -> int:
     return QUALITY_PRESETS.get(preset, QUALITY_PRESETS[DEFAULT_PRESET])[1]
+
+
+def _image_crf(quality: int) -> int:
+    """Maps Shrinkify quality (0-100) to AVIF CRF (0-63). Lower = better quality."""
+    return round(63 - (quality / 100) * 63)
 
 
 def _video_cmd(mf: MediaFile, output_path: Path, use_hw_accel: bool, preset: str) -> list[str]:
@@ -187,46 +170,119 @@ def _video_cmd(mf: MediaFile, output_path: Path, use_hw_accel: bool, preset: str
     return cmd
 
 
-# ── Image conversion ──────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# Image conversion — ffmpeg (AVIF) + exiftool (metadata)
+# ---------------------------------------------------------------------------
 
-def _convert_image_pillow(mf: MediaFile, output_path: Path, quality: int) -> ConversionResult:
-    if not _PILLOW_HEIF_OK:
+def _copy_metadata_exiftool(source: Path, dest: Path) -> bool:
+    """
+    Copies all EXIF/IPTC/XMP tags from source to dest using exiftool.
+    Also syncs FileCreateDate and FileModifyDate to DateTimeOriginal so the
+    filesystem timestamp matches the original capture date.
+    Returns True on success.
+    """
+    cmd = [
+        EXIFTOOL,
+        '-TagsFromFile', str(source),
+        '-All:All',
+        '-FileCreateDate<DateTimeOriginal',
+        '-FileModifyDate<DateTimeOriginal',
+        '-overwrite_original',
+        str(dest),
+    ]
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, timeout=30,
+            encoding='utf-8', errors='replace', **no_window()
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+
+def _convert_image_ffmpeg(mf: MediaFile, output_path: Path, quality: int) -> ConversionResult:
+    """
+    Two-step image conversion pipeline:
+      1. ffmpeg  — compresses to AVIF
+      2. exiftool — restores all metadata from the source file
+
+    Fails fast (before running ffmpeg) if exiftool is not available,
+    so no CPU time is wasted on a conversion that would lose metadata.
+    """
+    # Fast-fail: exiftool required for metadata preservation
+    if not EXIFTOOL_AVAILABLE:
         return ConversionResult(
             source_path=mf.path, output_path=output_path,
             success=False, original_size_bytes=mf.size_bytes,
-            error_message='pillow-heif not installed. Run: pip install pillow-heif pillow'
+            error_message=(
+                'exiftool not found — image conversion aborted to prevent metadata loss. '
+                'Place exiftool.exe next to gui.py, or run: winget install OliverBetz.ExifTool'
+            ),
         )
-    try:
-        img = _PILImage.open(mf.path)
-        exif = img.info.get('exif', b'')
-        save_kwargs: dict = {'format': 'HEIF', 'quality': quality}
-        if exif:
-            save_kwargs['exif'] = exif
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        img.save(output_path, **save_kwargs)
 
-        if not output_path.exists():
-            return ConversionResult(source_path=mf.path, output_path=output_path,
-                                    success=False, original_size_bytes=mf.size_bytes,
-                                    error_message='Output file was not created')
+    crf = _image_crf(quality)
+    cmd = [
+        FFMPEG, '-loglevel', 'error',
+        '-i', str(mf.path),
+        '-crf', str(crf),
+        '-y',
+        str(output_path),
+    ]
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, timeout=300,
+            encoding='utf-8', errors='replace', **no_window()
+        )
+        if result.returncode != 0 or not output_path.exists():
+            err = (result.stderr or '')[-600:]
+            return ConversionResult(
+                source_path=mf.path, output_path=output_path,
+                success=False, original_size_bytes=mf.size_bytes,
+                error_message=err or 'Unknown ffmpeg error',
+            )
+
+        # Restore all metadata (GPS, dates, camera info, orientation, ...)
+        metadata_ok = _copy_metadata_exiftool(mf.path, output_path)
+
         final_size = output_path.stat().st_size
         if final_size >= mf.size_bytes:
             output_path.unlink(missing_ok=True)
-            return ConversionResult(source_path=mf.path, output_path=output_path,
-                                    success=False, original_size_bytes=mf.size_bytes,
-                                    skipped=True,
-                                    skip_reason='Output was larger than original — original kept')
-        return ConversionResult(source_path=mf.path, output_path=output_path,
-                                success=True, original_size_bytes=mf.size_bytes,
-                                final_size_bytes=final_size)
+            return ConversionResult(
+                source_path=mf.path, output_path=output_path,
+                success=False, original_size_bytes=mf.size_bytes,
+                skipped=True,
+                skip_reason='Output was larger than original — original kept',
+            )
+
+        warning = '' if metadata_ok else 'exiftool ran but failed to copy metadata.'
+        return ConversionResult(
+            source_path=mf.path, output_path=output_path,
+            success=True, original_size_bytes=mf.size_bytes,
+            final_size_bytes=final_size,
+            error_message=warning,
+        )
+
+    except subprocess.TimeoutExpired:
+        output_path.unlink(missing_ok=True)
+        return ConversionResult(
+            source_path=mf.path, output_path=output_path,
+            success=False, original_size_bytes=mf.size_bytes,
+            error_message='Timed out after 5 minutes',
+        )
     except Exception as e:
         output_path.unlink(missing_ok=True)
-        return ConversionResult(source_path=mf.path, output_path=output_path,
-                                success=False, original_size_bytes=mf.size_bytes,
-                                error_message=str(e))
+        return ConversionResult(
+            source_path=mf.path, output_path=output_path,
+            success=False, original_size_bytes=mf.size_bytes,
+            error_message=str(e),
+        )
 
 
-# ── Main conversion entry point ───────────────────────────────
+# ---------------------------------------------------------------------------
+# Main conversion entry point
+# ---------------------------------------------------------------------------
 
 def convert_file(
     mf: MediaFile,
@@ -238,58 +294,75 @@ def convert_file(
     preset: str = DEFAULT_PRESET,
 ) -> ConversionResult:
     if not mf.needs_conversion:
-        return ConversionResult(source_path=mf.path, output_path=mf.path,
-                                success=False, original_size_bytes=mf.size_bytes,
-                                skipped=True, skip_reason='No conversion needed')
+        return ConversionResult(
+            source_path=mf.path, output_path=mf.path,
+            success=False, original_size_bytes=mf.size_bytes,
+            skipped=True, skip_reason='No conversion needed',
+        )
 
     output_path = get_output_path(mf, shrinkified_dir, scan_root, preserve_structure)
 
     if dry_run:
-        return ConversionResult(source_path=mf.path, output_path=output_path,
-                                success=True, original_size_bytes=mf.size_bytes,
-                                final_size_bytes=mf.estimated_output_size_bytes or mf.size_bytes,
-                                skipped=True, skip_reason='Dry run')
+        return ConversionResult(
+            source_path=mf.path, output_path=output_path,
+            success=True, original_size_bytes=mf.size_bytes,
+            final_size_bytes=mf.estimated_output_size_bytes or mf.size_bytes,
+            skipped=True, skip_reason='Dry run',
+        )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if mf.media_type == 'image':
-        return _convert_image_pillow(mf, output_path, _image_quality(preset))
+        return _convert_image_ffmpeg(mf, output_path, _image_quality(preset))
 
+    # --- Video ---
     cmd = _video_cmd(mf, output_path, use_hw_accel, preset)
     try:
-        result = subprocess.run(cmd, capture_output=True, timeout=3600,
-                                encoding='utf-8', errors='replace', **no_window())
+        result = subprocess.run(
+            cmd, capture_output=True, timeout=3600,
+            encoding='utf-8', errors='replace', **no_window()
+        )
         if result.returncode == 0 and output_path.exists():
             final_size = output_path.stat().st_size
             if final_size >= mf.size_bytes:
                 output_path.unlink(missing_ok=True)
-                return ConversionResult(source_path=mf.path, output_path=output_path,
-                                        success=False, original_size_bytes=mf.size_bytes,
-                                        skipped=True,
-                                        skip_reason='Output was larger than original — original kept')
-            return ConversionResult(source_path=mf.path, output_path=output_path,
-                                    success=True, original_size_bytes=mf.size_bytes,
-                                    final_size_bytes=final_size)
-        else:
-            err = (result.stderr or '')[-600:]
-            return ConversionResult(source_path=mf.path, output_path=output_path,
-                                    success=False, original_size_bytes=mf.size_bytes,
-                                    error_message=err or 'Unknown ffmpeg error')
+                return ConversionResult(
+                    source_path=mf.path, output_path=output_path,
+                    success=False, original_size_bytes=mf.size_bytes,
+                    skipped=True,
+                    skip_reason='Output was larger than original — original kept',
+                )
+            return ConversionResult(
+                source_path=mf.path, output_path=output_path,
+                success=True, original_size_bytes=mf.size_bytes,
+                final_size_bytes=final_size,
+            )
+        err = (result.stderr or '')[-600:]
+        return ConversionResult(
+            source_path=mf.path, output_path=output_path,
+            success=False, original_size_bytes=mf.size_bytes,
+            error_message=err or 'Unknown ffmpeg error',
+        )
     except subprocess.TimeoutExpired:
         output_path.unlink(missing_ok=True)
-        return ConversionResult(source_path=mf.path, output_path=output_path,
-                                success=False, original_size_bytes=mf.size_bytes,
-                                error_message='Timed out after 1 hour')
+        return ConversionResult(
+            source_path=mf.path, output_path=output_path,
+            success=False, original_size_bytes=mf.size_bytes,
+            error_message='Timed out after 1 hour',
+        )
     except Exception as e:
-        return ConversionResult(source_path=mf.path, output_path=output_path,
-                                success=False, original_size_bytes=mf.size_bytes,
-                                error_message=str(e))
+        return ConversionResult(
+            source_path=mf.path, output_path=output_path,
+            success=False, original_size_bytes=mf.size_bytes,
+            error_message=str(e),
+        )
 
 
-# ── Copy helpers ──────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# Copy helpers
+# ---------------------------------------------------------------------------
 
 def _copy_file(src: Path, dest: Path) -> bool:
-    """Copies src to dest, creating parent dirs. Returns True on success."""
     try:
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dest)
@@ -298,9 +371,12 @@ def _copy_file(src: Path, dest: Path) -> bool:
         return False
 
 
-def _dest_for(mf: MediaFile, shrinkified_dir: Path,
-              scan_root: Path | None, preserve_structure: bool) -> Path:
-    """Original filename kept (no extension change) for copies."""
+def _dest_for(
+    mf: MediaFile,
+    shrinkified_dir: Path,
+    scan_root: Path | None,
+    preserve_structure: bool,
+) -> Path:
     if preserve_structure and scan_root is not None:
         try:
             rel = mf.path.parent.relative_to(scan_root)
@@ -317,14 +393,8 @@ def copy_unconverted(
     preserve_structure: bool = False,
     dry_run: bool = False,
 ) -> tuple[int, int]:
-    """
-    Copies files that were NOT flagged for conversion (needs_conversion=False,
-    not duplicate) into shrinkified_dir unchanged.
-    Returns (copied_count, total_bytes_copied).
-    """
     targets = [mf for mf in media_files if not mf.needs_conversion and not mf.is_duplicate]
-    copied_count = 0
-    total_bytes = 0
+    copied_count, total_bytes = 0, 0
     for mf in targets:
         dest = _dest_for(mf, shrinkified_dir, scan_root, preserve_structure)
         if dry_run or _copy_file(mf.path, dest):
@@ -340,14 +410,7 @@ def copy_size_skipped(
     preserve_structure: bool = False,
     dry_run: bool = False,
 ) -> tuple[int, int]:
-    """
-    Copies files whose conversion was attempted but skipped because the output
-    was larger than the original. These still have needs_conversion=True so
-    copy_unconverted misses them — this function fills that gap.
-    Returns (copied_count, total_bytes_copied).
-    """
-    copied_count = 0
-    total_bytes = 0
+    copied_count, total_bytes = 0, 0
     for mf in skipped_files:
         dest = _dest_for(mf, shrinkified_dir, scan_root, preserve_structure)
         if dry_run or _copy_file(mf.path, dest):
@@ -356,9 +419,11 @@ def copy_size_skipped(
     return copied_count, total_bytes
 
 
-def delete_duplicates(media_files: list[MediaFile], dry_run: bool = False) -> tuple[int, int]:
-    deleted_count = 0
-    saved_bytes = 0
+def delete_duplicates(
+    media_files: list[MediaFile],
+    dry_run: bool = False,
+) -> tuple[int, int]:
+    deleted_count, saved_bytes = 0, 0
     for mf in media_files:
         if not mf.is_duplicate:
             continue

@@ -11,13 +11,13 @@ OUTDATED_VIDEO_CODECS = {
 }
 MODERN_VIDEO_CODECS = {'hevc', 'h265', 'av1', 'vp9'}
 OUTDATED_IMAGE_FORMATS = {'MJPEG', 'BMP', 'TIFF', 'UNKNOWN'}
-MODERN_IMAGE_FORMATS  = {'HEVC', 'AV1', 'WEBP'}
+MODERN_IMAGE_FORMATS  = {'HEVC', 'AV1', 'WEBP', 'AVIF', 'HEIF'}
 
 # PNG is lossless — converting to lossy HEIF can corrupt screenshots, graphics,
 # and illustrations. We skip PNG by default and surface a warning instead.
 PNG_LOSSLESS_FORMATS = {'PNG'}
 
-# Quality presets: (video_crf, image_pillow_quality, label, description)
+# Quality presets: (video_crf, image_quality, label, description)
 QUALITY_PRESETS = {
     'max':          (28, 60, 'Maximum Shrink',  'Smallest file size. Slight quality reduction, unlikely to be noticeable.'),
     'balanced':     (24, 72, 'Balanced',         'Best trade-off between size and quality. Recommended default.'),
@@ -119,7 +119,7 @@ def _analyze_image(mf: MediaFile, preset: str) -> None:
     if mf.size_mb < MIN_IMAGE_SIZE_MB:
         return
     ext = mf.extension
-    if ext in {'.heic', '.heif'}:
+    if ext in {'.heic', '.heif', '.avif'}:
         return
     fmt = (mf.image_format or '').upper()
     if fmt in MODERN_IMAGE_FORMATS:
@@ -134,7 +134,7 @@ def _analyze_image(mf: MediaFile, preset: str) -> None:
     if fmt in OUTDATED_IMAGE_FORMATS or fmt == 'MJPEG':
         mf.needs_conversion = True
         fmt_label = 'JPEG' if fmt == 'MJPEG' else fmt
-        mf.conversion_reason = f"{fmt_label} → HEIF"
+        mf.conversion_reason = f"{fmt_label} → AVIF"
         mf.estimated_output_size_bytes = int(mf.size_bytes * _image_conversion_ratio(preset))
 
 

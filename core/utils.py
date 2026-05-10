@@ -11,79 +11,110 @@ from pathlib import Path
 
 def find_binary(name: str) -> str:
     """
-    Finds an external binary (ffmpeg / ffprobe) more robustly than shutil.which alone.
+    Finds an external binary (ffmpeg / ffprobe / exiftool) more robustly than
+    shutil.which alone.
 
-    When running as a PyInstaller --windowed exe on Windows, double-clicking the app
-    may give it a restricted PATH that omits user-installed tools. We therefore also
-    check common installation locations and the directory that contains the running
-    executable.
+    Search order:
+      1. Standard PATH lookup
+      2. Script directory (project root when running 'python gui.py')
+      3. Current working directory
+      4. sys.executable directory (PyInstaller --onedir)
+      5. PyInstaller _MEIPASS (--onefile extraction dir)
+      6. Common platform-specific installation paths
     """
+    ext = '.exe' if sys.platform == 'win32' else ''
+
     # 1. Standard PATH lookup
     found = shutil.which(name)
     if found:
         return found
 
-    # 2. Same directory as the running executable (useful when bundled or portable)
-    exe_dir = Path(sys.executable).parent
-    candidate = exe_dir / (name + ('.exe' if sys.platform == 'win32' else ''))
-    if candidate.exists():
-        return str(candidate)
-
-    # 3. PyInstaller _MEIPASS temp dir (--onefile extracts here at runtime)
-    meipass = getattr(sys, '_MEIPASS', None)
-    if meipass:
-        candidate = Path(meipass) / (name + ('.exe' if sys.platform == 'win32' else ''))
+    # 2. Script directory — project root when running 'python gui.py' or 'python cli.py'
+    script_dir = Path(sys.argv[0]).resolve().parent
+    for fname in [name + ext, f'{name}(-k){ext}']:   # also catches exiftool(-k).exe
+        candidate = script_dir / fname
         if candidate.exists():
             return str(candidate)
 
-    # 4. Common Windows installation paths
+    # 3. Current working directory
+    for fname in [name + ext, f'{name}(-k){ext}']:
+        candidate = Path.cwd() / fname
+        if candidate.exists():
+            return str(candidate)
+
+    # 4. sys.executable directory (PyInstaller --onedir builds)
+    exe_dir = Path(sys.executable).parent
+    candidate = exe_dir / (name + ext)
+    if candidate.exists():
+        return str(candidate)
+
+    # 5. PyInstaller _MEIPASS (--onefile extraction dir)
+    meipass = getattr(sys, '_MEIPASS', None)
+    if meipass:
+        candidate = Path(meipass) / (name + ext)
+        if candidate.exists():
+            return str(candidate)
+
+    # 6a. Common Windows paths
     if sys.platform == 'win32':
         localappdata = os.environ.get('LOCALAPPDATA', '')
-
-        # winget installs ffmpeg under a versioned subfolder — glob to avoid hardcoding the version
         winget_base = Path(localappdata) / 'Microsoft' / 'WinGet' / 'Packages'
+
         if winget_base.exists():
-            for candidate in winget_base.glob(f'Gyan.FFmpeg*/**/bin/{name}.exe'):
-                return str(candidate)
+            for pattern in [
+                f'Gyan.FFmpeg*/**/bin/{name}.exe',          # ffmpeg via winget
+                f'OliverBetz.ExifTool*/**/{name}.exe',       # exiftool via winget
+            ]:
+                for match in winget_base.glob(pattern):
+                    return str(match)
 
         win_paths = [
             Path(localappdata) / 'Programs' / 'ffmpeg' / 'bin' / f'{name}.exe',
             Path('C:/ffmpeg/bin') / f'{name}.exe',
             Path('C:/Program Files/ffmpeg/bin') / f'{name}.exe',
             Path('C:/Program Files (x86)/ffmpeg/bin') / f'{name}.exe',
+            Path('C:/Windows') / f'{name}.exe',
+            Path('C:/Program Files/ExifTool') / f'{name}.exe',
         ]
         for p in win_paths:
             if p.exists():
                 return str(p)
 
-    # 5. Common macOS Homebrew paths
+    # 6b. Common macOS Homebrew paths
     if sys.platform == 'darwin':
-        mac_paths = [
-            Path('/opt/homebrew/bin') / name,                       # Apple Silicon
-            Path('/usr/local/bin') / name,                          # Intel Mac
-            Path('/usr/bin') / name,
-            Path(os.path.expanduser('~')) / 'homebrew/bin' / name,  # User's homebrew
-        ]
-        # Also try a PATH lookup with common directories appended,
-        # since on macOS the PATH can be very inconsistent depending
-        # on how the app is launched (Terminal vs Finder vs PyInstaller).
-        extra_env_path = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-        found = shutil.which(name, path=extra_env_path)
+        extra_path = '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
+        found = shutil.which(name, path=extra_path)
         if found:
             return found
-        for p in mac_paths:
+        for p in [
+            Path('/opt/homebrew/bin') / name,
+            Path('/usr/local/bin') / name,
+            Path('/usr/bin') / name,
+            Path(os.path.expanduser('~')) / 'homebrew/bin' / name,
+        ]:
             if p.exists():
                 return str(p)
 
-    # Fallback — return the bare name and let subprocess report the error
+    # Fallback — return bare name, subprocess will report the error
     return name
+
+
+def _probe_binary(path: str) -> bool:
+    """Returns True if the binary at *path* runs and exits cleanly."""
+    try:
+        r = subprocess.run(
+            [path, '-version' if 'ffprobe' in path or 'ffmpeg' in path else '-ver'],
+            capture_output=True, timeout=5,
+        )
+        return r.returncode == 0
+    except Exception:
+        return False
 
 
 def no_window() -> dict:
     """
-    Returns subprocess kwargs that prevent a console window from flashing
-    on Windows when running from a GUI / PyInstaller --windowed build.
-    On other platforms returns an empty dict (no-op).
+    Returns subprocess kwargs that suppress the console window on Windows
+    (GUI / PyInstaller --windowed builds). No-op on other platforms.
     """
     if sys.platform == 'win32':
         si = subprocess.STARTUPINFO()
@@ -93,6 +124,11 @@ def no_window() -> dict:
     return {}
 
 
-# Resolve once at import time so every subprocess call uses the same path
-FFPROBE = find_binary('ffprobe')
-FFMPEG  = find_binary('ffmpeg')
+# Resolve once at import time
+FFPROBE          = find_binary('ffprobe')
+FFMPEG           = find_binary('ffmpeg')
+EXIFTOOL         = find_binary('exiftool')
+
+# Availability flags — checked by GUI at startup and by converter before each job
+FFMPEG_AVAILABLE    = _probe_binary(FFPROBE)   # ffprobe is the reliable check
+EXIFTOOL_AVAILABLE  = _probe_binary(EXIFTOOL)

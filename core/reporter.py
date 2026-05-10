@@ -284,7 +284,7 @@ def generate_html_report(
 
   <div class="footer">
     <span>Shrinkify — Media Optimization Tool</span>
-    <span>Analyzed with ffmpeg + ffprobe</span>
+    <span>Analyzed with ffmpeg · ffprobe · exiftool</span>
   </div>
 
 </div>

@@ -47,7 +47,7 @@ def _apply_dark_titlebar(hwnd):
 # On Retina displays tkinter uses logical pixels; bump base sizes slightly.
 _IS_MACOS = sys.platform == 'darwin'
 
-from core.utils import FFPROBE
+from core.utils import FFPROBE, EXIFTOOL_AVAILABLE
 from core.scanner import scan_directory, scan_file, compute_hashes, find_duplicates
 from core.analyzer import analyze_all, QUALITY_PRESETS, DEFAULT_PRESET
 from core.converter import convert_file, copy_unconverted, copy_size_skipped, delete_duplicates, get_hw_encoder
@@ -275,7 +275,7 @@ class ShrinkifyApp(tk.Tk):
         # Check ffmpeg after UI is built so we can log to the log widget
         self.after(100, self._check_ffmpeg_and_report)
 
-    # ── ffmpeg check ──────────────────────────────────────────
+    # ── Dependency check ──────────────────────────────────────
     def _check_ffmpeg_and_report(self):
         self._ffmpeg_ok = _check_ffmpeg()
         if self._ffmpeg_ok:
@@ -283,6 +283,15 @@ class ShrinkifyApp(tk.Tk):
             hw_label = f'  HW encoder: {hw}' if hw else '  HW encoder: none (software only)'
             self._log_msg('Shrinkify ready.\n', 'accent')
             self._log_msg(f'{hw_label}\n', 'muted')
+            if EXIFTOOL_AVAILABLE:
+                self._log_msg('  exiftool: found\n', 'muted')
+            else:
+                self._log_msg(
+                    '  exiftool: NOT FOUND — image conversion disabled.\n'
+                    '  Place exiftool.exe next to gui.py, or run:\n'
+                    '  winget install OliverBetz.ExifTool\n',
+                    'red'
+                )
         else:
             self._log_msg(
                 'WARNING: ffmpeg / ffprobe not found in PATH.\n'
@@ -291,7 +300,7 @@ class ShrinkifyApp(tk.Tk):
                 'red'
             )
             self._progress_label.config(
-                text='⚠  ffmpeg not found — video features unavailable')
+                text='\u26a0  ffmpeg not found — video features unavailable')
 
     # ── Main UI ───────────────────────────────────────────────
     def _build_main_ui(self):
