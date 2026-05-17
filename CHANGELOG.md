@@ -2,6 +2,15 @@
 
 All notable changes to Shrinkify are documented here.
 
+## [0.1.5] - 2026-05-17
+
+### Fixed
+- GPU acceleration was silently falling back to CPU (libx265) on RTX 40xx
+  laptops with NVIDIA driver 530+. The encoder probe now uses 5 frames and
+  explicit `yuv420p` to satisfy newer driver requirements. NVENC VBR command
+  also gains `-b:v 0` for correct behaviour with ffmpeg 6+.
+- Probe failure reason is now shown in the conversion log for easier diagnosis.
+
 ## [0.1.4] — 2026-05-10
 
 ### Breaking changes

@@ -50,7 +50,8 @@ _IS_MACOS = sys.platform == 'darwin'
 from core.utils import FFPROBE, EXIFTOOL_AVAILABLE
 from core.scanner import scan_directory, scan_file, compute_hashes, find_duplicates
 from core.analyzer import analyze_all, QUALITY_PRESETS, DEFAULT_PRESET
-from core.converter import convert_file, copy_unconverted, copy_size_skipped, delete_duplicates, get_hw_encoder
+from core.converter import (convert_file, copy_unconverted, copy_size_skipped,
+                            delete_duplicates, get_hw_encoder, get_hw_probe_failure_reason)
 from core.reporter import generate_html_report, _fmt_size
 
 COLORS = {
@@ -828,7 +829,14 @@ class ShrinkifyApp(tk.Tk):
 
             if hw_accel:
                 hw = get_hw_encoder()
-                enc_info = f'encoder: {hw}' if hw else 'encoder: libx265 (no hw found)'
+                if hw:
+                    enc_info = f'encoder: {hw}'
+                else:
+                    enc_info = 'encoder: libx265 (no hw found)'
+                    failure_reason = get_hw_probe_failure_reason()
+                    if failure_reason:
+                        self.after(0, lambda r=failure_reason:
+                            self._log_err(f'GPU probe failed — {r}'))
             else:
                 enc_info = 'encoder: libx265'
 

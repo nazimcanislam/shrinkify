@@ -23,15 +23,31 @@ from core.analyzer import QUALITY_PRESETS, DEFAULT_PRESET
 # Hardware encoder detection
 # ---------------------------------------------------------------------------
 
+# Stores the stderr output of the first failing probe for each encoder,
+# so the GUI can surface a useful "why did GPU detection fail?" message.
+_PROBE_FAILURE_REASONS: dict[str, str] = {}
+
+
 def _probe_encoder(encoder: str) -> bool:
     """
     Tests whether an encoder works by running a short null encode.
     Returns True only if ffmpeg exits cleanly without errors.
+
+    Robustness notes vs. the old single-frame probe:
+    - '-vframes 5' instead of 1: some NVENC implementations reject single-frame
+      encodes because GOP initialisation never completes, producing a non-zero
+      exit code even though the encoder is perfectly functional on real files.
+    - '-pix_fmt yuv420p' is explicit: without it, format negotiation can fail
+      on drivers that changed their default surface format (seen with RTX 40xx
+      laptop GPUs on driver 530+).
+    - stderr is captured and stored in _PROBE_FAILURE_REASONS so callers can
+      surface a human-readable explanation when the probe fails.
     """
     base_cmd = [
         FFMPEG, '-loglevel', 'error',
-        '-f', 'lavfi', '-i', 'color=black:s=256x256:r=1',
-        '-vframes', '1',
+        '-f', 'lavfi', '-i', 'color=black:s=256x256:r=1:d=1',
+        '-vframes', '5',
+        '-pix_fmt', 'yuv420p',
     ]
     if encoder == 'hevc_videotoolbox':
         base_cmd += ['-color_range', 'tv']
@@ -43,8 +59,18 @@ def _probe_encoder(encoder: str) -> bool:
             capture_output=True, encoding='utf-8', errors='replace', timeout=15,
             **no_window()
         )
-        return result.returncode == 0
-    except Exception:
+        if result.returncode == 0:
+            _PROBE_FAILURE_REASONS.pop(encoder, None)   # clear any stale entry
+            return True
+        # Store the last 400 chars of stderr so the GUI can report it
+        reason = (result.stderr or '(no stderr)').strip()[-400:]
+        _PROBE_FAILURE_REASONS[encoder] = reason
+        return False
+    except subprocess.TimeoutExpired:
+        _PROBE_FAILURE_REASONS[encoder] = 'probe timed out after 15 s'
+        return False
+    except Exception as exc:
+        _PROBE_FAILURE_REASONS[encoder] = str(exc)
         return False
 
 
@@ -83,6 +109,19 @@ def get_hw_encoder() -> str | None:
     if _HW_ENCODER_CACHE is False:
         _HW_ENCODER_CACHE = detect_hw_encoder()
     return _HW_ENCODER_CACHE
+
+
+def get_hw_probe_failure_reason() -> str:
+    """
+    Returns a human-readable explanation of why GPU encoder detection failed,
+    intended for display in the GUI log.  Empty string if detection succeeded.
+    """
+    if not _PROBE_FAILURE_REASONS:
+        return ''
+    lines = []
+    for enc, reason in _PROBE_FAILURE_REASONS.items():
+        lines.append(f'{enc}: {reason}')
+    return '\n'.join(lines)
 
 
 # ---------------------------------------------------------------------------
@@ -155,7 +194,11 @@ def _video_cmd(mf: MediaFile, output_path: Path, use_hw_accel: bool, preset: str
             qv = int(20 + (crf - 20) * (55 / 8))
             cmd += ['-c:v', 'hevc_videotoolbox', '-q:v', str(qv), '-tag:v', 'hvc1']
         elif hw == 'hevc_nvenc':
-            cmd += ['-c:v', 'hevc_nvenc', '-rc', 'vbr', '-cq', str(crf + 4), '-preset', 'p4']
+            # '-b:v 0' is required in ffmpeg 6+ to disable the implicit bitrate
+            # target; without it, '-rc vbr -cq X' can silently fall back to
+            # bitrate-based mode (or error out with newer NVIDIA drivers).
+            cmd += ['-c:v', 'hevc_nvenc', '-rc', 'vbr', '-cq', str(crf + 4),
+                    '-b:v', '0', '-preset', 'p4']
         elif hw == 'hevc_qsv':
             cmd += ['-c:v', 'hevc_qsv', '-global_quality', str(crf + 2)]
         elif hw == 'hevc_amf':
