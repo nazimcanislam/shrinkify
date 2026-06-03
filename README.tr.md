@@ -8,6 +8,7 @@
   ![exiftool](https://img.shields.io/badge/exiftool-gerekli-4a90d9?logoColor=white)
   ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
   ![Lisans](https://img.shields.io/badge/lisans-MIT-blue)
+  [![GitHub Sponsors](https://img.shields.io/github/sponsors/nazimcanislam?label=Sponsor&logo=GitHub)](https://github.com/sponsors/nazimcanislam)
 
   > **[Claude](https://claude.ai) (Anthropic) ile iş birliği içinde geliştirildi.** Bu proje, bir insan geliştirici ile Claude arasındaki iteratif bir konuşma aracılığıyla tasarlandı. Mimari, kod ve belgeler birlikte üretildi — gerçek bir insan–yapay zeka iş birliği.
 </div>

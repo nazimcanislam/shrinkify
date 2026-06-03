@@ -8,6 +8,7 @@
   ![exiftool](https://img.shields.io/badge/exiftool-required-4a90d9?logoColor=white)
   ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
   ![License](https://img.shields.io/badge/license-MIT-blue)
+  [![GitHub Sponsors](https://img.shields.io/github/sponsors/nazimcanislam?label=Sponsor&logo=GitHub)](https://github.com/sponsors/nazimcanislam)
 
   > **Built in collaboration with [Claude](https://claude.ai) (Anthropic).** This project was designed and developed through an iterative conversation between a human developer and Claude. The architecture, code, and documentation were produced together — a genuine human–AI collaboration.
 </div>
