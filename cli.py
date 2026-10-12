@@ -16,7 +16,10 @@ from pathlib import Path
 
 from core.scanner import scan_directory, compute_hashes, find_duplicates
 from core.analyzer import analyze_all
-from core.converter import convert_file, copy_unconverted, delete_duplicates
+from core.converter import (
+    convert_file, copy_unconverted, delete_duplicates,
+    get_hw_encoder, get_hw_probe_failure_reason,
+)
 from core.reporter import generate_html_report, print_summary, _fmt_size
 from version import __version__
 
@@ -59,7 +62,8 @@ Dry run:
     parser.add_argument('--duplicates',       action='store_true', help='Delete duplicate files')
     parser.add_argument('--dry-run',          action='store_true', help='Simulate — no files modified')
     parser.add_argument('--no-hash',          action='store_true', help='Skip hash computation')
-    parser.add_argument('--hw-accel',         action='store_true', help='NVIDIA GPU acceleration (NVENC)')
+    parser.add_argument('--hw-accel',         action='store_true',
+                        help='GPU acceleration (auto-detect: NVENC / QSV / VA-API / VideoToolbox / AMF)')
     parser.add_argument('--report',           type=str, default='shrinkify_report.html')
     parser.add_argument('--no-report',        action='store_true')
     parser.add_argument('--version', action='version', version=f'Shrinkify {__version__}')
@@ -106,7 +110,22 @@ Dry run:
         candidates = [mf for mf in media_files if mf.needs_conversion and not mf.is_duplicate]
         dry_label = " (DRY RUN)" if args.dry_run else ""
         if candidates:
-            print(f"  [4/4] Converting{dry_label} [{args.preset}] — {len(candidates)} files → {shrinkified_dir}\n")
+            enc_name = "libx265"
+            if args.hw_accel:
+                hw = get_hw_encoder()
+                if hw:
+                    enc_name = hw
+                else:
+                    enc_name = "libx265 (hardware probe failed)"
+                    reason = get_hw_probe_failure_reason()
+                    print("  ⚠ GPU acceleration requested (--hw-accel), but detection failed:")
+                    if reason:
+                        print(f"    {reason}")
+                    else:
+                        print("    No compatible hardware encoder found.")
+                    print("    Falling back to CPU encoding (libx265).\n")
+
+            print(f"  [4/4] Converting{dry_label} [{args.preset}, encoder: {enc_name}] — {len(candidates)} files → {shrinkified_dir}\n")
             total_saved = 0
             success_count = 0
             fail_count = 0

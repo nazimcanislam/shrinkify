@@ -17,11 +17,12 @@ _find_binary = find_binary
 _FFPROBE     = FFPROBE
 _FFMPEG      = find_binary('ffmpeg')
 
+import hashlib as _hashlib
+
 try:
     import xxhash as _xxhash
     _USE_XXHASH = True
 except ImportError:
-    import hashlib as _hashlib
     _USE_XXHASH = False
 
 logger = logging.getLogger(__name__)
@@ -248,8 +249,10 @@ def compute_hashes(media_files: list[MediaFile], progress_callback=None) -> None
     Computes file hashes in-place. Uses first+last 4 MB chunks for speed.
     Uses xxhash (xxh64) when available — ~3-5x faster than MD5.
     Falls back to MD5 if xxhash is not installed.
+    Matching candidates are verified with a full SHA-256 hash before duplicate marking.
     """
     CHUNK_SIZE = 4 * 1024 * 1024
+    candidates: dict[str, list[MediaFile]] = {}
     for i, mf in enumerate(media_files):
         if progress_callback:
             progress_callback(i + 1, len(media_files), mf.filename)
@@ -262,9 +265,25 @@ def compute_hashes(media_files: list[MediaFile], progress_callback=None) -> None
                     h.update(f.read(CHUNK_SIZE))
                 h.update(str(mf.size_bytes).encode())
             mf.file_hash = h.hexdigest()
+            candidates.setdefault(mf.file_hash, []).append(mf)
         except (IOError, OSError) as e:
             logger.warning(f"Hash failed for {mf.filename}: {e}")
             mf.file_hash = None
+
+    for group in candidates.values():
+        if len(group) < 2:
+            group[0].file_hash = None
+            continue
+        for mf in group:
+            try:
+                h = _hashlib.sha256()
+                with open(mf.path, 'rb') as f:
+                    while chunk := f.read(CHUNK_SIZE):
+                        h.update(chunk)
+                mf.file_hash = h.hexdigest()
+            except (IOError, OSError) as e:
+                logger.warning(f"Full hash failed for {mf.filename}: {e}")
+                mf.file_hash = None
 
 
 def find_duplicates(media_files: list[MediaFile]) -> int:

@@ -269,7 +269,7 @@ def generate_html_report(
       <div class="section-title">🔁 Duplicate Files</div>
       <div class="section-badge">{len(duplicate_files)} files · {_fmt_size(summary.duplicate_size_bytes)}</div>
     </div>
-    {_duplicate_table(duplicate_files)}
+    {_duplicate_table(duplicate_files, scan_directory)}
   </div>
 
   <div class="section">
@@ -372,19 +372,30 @@ def _conversion_table(files: list[MediaFile]) -> str:
     return f'<div class="table-wrap"><table><thead>{header}</thead><tbody>{"".join(rows)}</tbody></table></div>'
 
 
-def _duplicate_table(files: list[MediaFile]) -> str:
+def _report_path(path: Path, scan_directory: Path) -> str:
+    """Formats a path relative to the selected folder when possible."""
+    try:
+        return str(path.resolve().relative_to(scan_directory.resolve()))
+    except ValueError:
+        # This can occur if a caller supplies a file outside the scan root.
+        return str(path.resolve())
+
+
+def _duplicate_table(files: list[MediaFile], scan_directory: Path) -> str:
     if not files:
         return '<div style="color:var(--text-muted);padding:20px;font-family:var(--mono-font);font-size:12px;">No duplicates found.</div>'
     rows = []
     for mf in files:
+        duplicate_path = _report_path(mf.path, scan_directory)
+        original_path = _report_path(mf.duplicate_of, scan_directory) if mf.duplicate_of else "—"
         rows.append(f'<tr>'
-                    f'<td class="filename-cell" title="{mf.path}">{mf.filename}</td>'
+                    f'<td class="filename-cell" title="{duplicate_path}">{duplicate_path}</td>'
                     f'<td data-sort="{mf.size_bytes}">{_fmt_size(mf.size_bytes)}</td>'
-                    f'<td class="filename-cell" title="{mf.duplicate_of}">{mf.duplicate_of.name if mf.duplicate_of else "—"}</td>'
+                    f'<td class="filename-cell" title="{original_path}">{original_path}</td>'
                     f'<td><span class="badge badge-dup">DUPLICATE</span></td>'
                     f'</tr>')
     th = lambda label: f'<th class="sortable">{label}<i class="sort-icon"></i></th>'
-    header = f'<tr>{th("Filename")}{th("Size")}{th("Original")}{th("Status")}</tr>'
+    header = f'<tr>{th("Duplicate file")}{th("Size")}{th("Original file")}{th("Status")}</tr>'
     return f'<div class="table-wrap"><table><thead>{header}</thead><tbody>{"".join(rows)}</tbody></table></div>'
 
 
